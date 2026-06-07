@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Quiz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg: #1c1917;
+    --card: #28251f;
+    --card2: #332f27;
+    --warm: #f5f0e8;
+    --gold: #d4a843;
+    --gold2: #e8c878;
+    --rose: #c8614a;
+    --teal: #4ab8a8;
+    --purple: #a06cd5;
+    --muted: #8a8070;
+    --border: #3d3830;
+    --text: #f0ebe0;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Noto Sans JP',sans-serif; min-height:100vh; }
+
+  .wrap { max-width:620px; margin:0 auto; padding:0 16px 80px; }
+
+  /* ===== HOME ===== */
+  #homeScreen { animation:fadeUp 0.4s ease; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+  .home-header { padding:48px 0 32px; text-align:center; }
+  .home-eyebrow { font-size:11px; letter-spacing:5px; color:var(--gold); text-transform:uppercase; margin-bottom:10px; }
+  .home-title { font-family:'DM Serif Display',serif; font-size:clamp(44px,10vw,72px); color:var(--warm); line-height:1; margin-bottom:6px; }
+  .home-sub { font-size:13px; color:var(--muted); letter-spacing:2px; }
+
+  .section-label { font-size:10px; letter-spacing:4px; color:var(--muted); text-transform:uppercase; margin-bottom:14px; padding-left:2px; }
+
+  .genre-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:32px; }
+
+  .genre-card {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:20px 18px;
+    cursor:pointer;
+    transition:all 0.2s;
+    text-align:left;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .genre-card::before {
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0;
+    height:2px;
+    background:var(--genre-color, var(--gold));
+    transform:scaleX(0);
+    transition:transform 0.2s;
+  }
+
+  .genre-card:hover { border-color:var(--genre-color, var(--gold)); transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+  .genre-card:hover::before { transform:scaleX(1); }
+
+  .genre-icon { font-size:28px; margin-bottom:10px; display:block; }
+  .genre-name { font-size:15px; font-weight:700; color:var(--warm); margin-bottom:4px; }
+  .genre-desc { font-size:11px; color:var(--muted); line-height:1.5; }
+  .genre-count { position:absolute; top:14px; right:14px; font-size:10px; color:var(--muted); font-family:'DM Serif Display',serif; }
+
+  .coming-soon { opacity:0.4; cursor:not-allowed; }
+  .coming-soon:hover { transform:none; box-shadow:none; border-color:var(--border); }
+  .coming-badge { position:absolute; bottom:12px; right:12px; background:var(--card2); border:1px solid var(--border); border-radius:4px; font-size:9px; color:var(--muted); padding:2px 6px; letter-spacing:1px; }
+
+  /* ===== GENRE SELECT (問題数) ===== */
+  #genreScreen { display:none; animation:fadeUp 0.3s ease; }
+
+  .back-btn { background:transparent; border:none; color:var(--muted); font-family:'Noto Sans JP',sans-serif; font-size:13px; cursor:pointer; padding:0; margin-bottom:24px; display:flex; align-items:center; gap:6px; transition:color 0.2s; }
+  .back-btn:hover { color:var(--warm); }
+
+  .genre-hero { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:28px 24px; margin-bottom:20px; position:relative; overflow:hidden; }
+  .genre-hero::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--genre-color, var(--gold)); }
+  .genre-hero-icon { font-size:40px; margin-bottom:12px; display:block; }
+  .genre-hero-name { font-family:'DM Serif Display',serif; font-size:28px; color:var(--warm); margin-bottom:8px; }
+  .genre-hero-desc { font-size:13px; color:var(--muted); line-height:1.8; }
+
+  .count-select { width:100%; background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; color:var(--text); font-family:'Noto Sans JP',sans-serif; font-size:14px; margin-bottom:16px; appearance:none; cursor:pointer; }
+
+  .play-btn { width:100%; border:none; border-radius:14px; padding:18px; font-family:'Noto Sans JP',sans-serif; font-size:16px; font-weight:700; cursor:pointer; transition:all 0.2s; letter-spacing:1px; background:linear-gradient(135deg, var(--genre-color, var(--gold)), var(--gold2)); color:#1c1917; }
+  .play-btn:hover { opacity:0.9; transform:translateY(-2px); }
+
+  /* ===== GAME ===== */
+  #gameScreen { display:none; }
+
+  .hud { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; }
+  .hud-stat { text-align:center; }
+  .hud-label { font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:3px; }
+  .hud-val { font-family:'DM Serif Display',serif; font-size:24px; color:var(--gold); }
+  .hud-val.accent { color:var(--genre-accent, var(--gold)); }
+  .hud-div { width:1px; height:30px; background:var(--border); }
+
+  .type-badge { display:inline-flex; align-items:center; gap:8px; border-radius:8px; padding:7px 14px; font-size:12px; font-weight:500; letter-spacing:1px; margin-bottom:16px; }
+
+  .q-card { background:var(--card); border:1px solid var(--border); border-radius:20px; overflow:hidden; margin-bottom:16px; animation:slideUp 0.35s ease; }
+  @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .q-scene { background:var(--card2); border-bottom:1px solid var(--border); padding:22px 24px; }
+  .q-scene-label { font-size:10px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:12px; }
+  .q-scene-text { font-size:15px; line-height:1.9; color:var(--warm); }
+  .q-scene-text .hl { background:rgba(212,168,67,0.15); border-bottom:1px solid rgba(212,168,67,0.4); padding:0 2px; color:var(--gold2); }
+
+  .q-body { padding:20px 24px; }
+  .q-text { font-size:15px; font-weight:700; line-height:1.6; margin-bottom:20px; color:var(--warm); }
+
+  .options { display:flex; flex-direction:column; gap:10px; }
+  .opt { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:15px 18px; color:var(--text); font-family:'Noto Sans JP',sans-serif; font-size:14px; text-align:left; cursor:pointer; transition:all 0.18s; line-height:1.6; display:flex; align-items:flex-start; gap:12px; }
+  .opt-letter { width:24px; height:24px; border-radius:6px; background:var(--border); color:var(--muted); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; transition:all 0.18s; }
+  .opt:hover { border-color:var(--gold); background:rgba(212,168,67,0.06); }
+  .opt:hover .opt-letter { background:var(--gold); color:#1c1917; }
+  .opt.correct { border-color:var(--teal); background:rgba(74,184,168,0.1); }
+  .opt.correct .opt-letter { background:var(--teal); color:#1c1917; }
+  .opt.wrong { border-color:var(--rose); background:rgba(200,97,74,0.1); opacity:0.7; }
+  .opt.wrong .opt-letter { background:var(--rose); color:white; }
+  .opt.dim { opacity:0.4; cursor:default; pointer-events:none; }
+
+  .explain-box { display:none; background:var(--card2); border-radius:14px; overflow:hidden; margin-bottom:16px; animation:slideUp 0.3s ease; }
+  .explain-box.show { display:block; }
+  .explain-header { padding:12px 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
+  .explain-icon { font-size:20px; }
+  .explain-title { font-size:13px; font-weight:700; color:var(--gold2); }
+  .explain-result { margin-left:auto; font-family:'DM Serif Display',serif; font-size:22px; }
+  .explain-body { padding:18px; }
+  .explain-why { font-size:13px; line-height:1.9; color:#b0a898; margin-bottom:14px; }
+  .tip-box { background:rgba(212,168,67,0.08); border-left:3px solid var(--gold); border-radius:0 8px 8px 0; padding:12px 14px; }
+  .tip-label { font-size:9px; letter-spacing:3px; color:var(--gold); text-transform:uppercase; margin-bottom:6px; }
+  .tip-text { font-size:13px; line-height:1.8; color:var(--gold2); }
+
+  .next-btn { display:none; width:100%; background:transparent; border:1px solid var(--gold); border-radius:12px; padding:15px; color:var(--gold); font-family:'Noto Sans JP',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.2s; letter-spacing:1px; margin-bottom:12px; }
+  .next-btn:hover { background:var(--gold); color:#1c1917; }
+  .next-btn.show { display:block; }
+
+  /* 用語解説ボックス */
+  .words-box { display:none; background:rgba(160,108,213,0.08); border:1px solid rgba(160,108,213,0.25); border-radius:12px; padding:16px 18px; margin-bottom:16px; animation:slideUp 0.3s ease; }
+  .words-box.show { display:block; }
+  .words-box-label { font-size:9px; letter-spacing:3px; color:#a06cd5; text-transform:uppercase; margin-bottom:12px; font-weight:700; }
+  .word-item { margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid rgba(160,108,213,0.15); }
+  .word-item:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
+  .word-term { font-size:13px; font-weight:700; color:#c49de8; margin-bottom:3px; }
+  .word-desc { font-size:12px; color:#b0a898; line-height:1.7; }
+
+  /* ===== RESULT ===== */
+  #resultScreen { display:none; animation:fadeUp 0.5s ease; }
+  .result-top { background:var(--card); border:1px solid var(--border); border-radius:20px; overflow:hidden; margin-bottom:16px; }
+  .result-hero { background:linear-gradient(160deg,#2a2318,#1c1917); padding:40px 24px 32px; text-align:center; border-bottom:1px solid var(--border); }
+  .result-big-emoji { font-size:64px; margin-bottom:12px; display:block; }
+  .result-rank { font-family:'DM Serif Display',serif; font-size:28px; color:var(--gold); margin-bottom:6px; }
+  .result-sub { font-size:13px; color:var(--muted); }
+  .result-score-area { padding:28px 24px; text-align:center; }
+  .result-score-num { font-family:'DM Serif Display',serif; font-size:68px; color:var(--gold2); line-height:1; margin-bottom:4px; }
+  .result-score-denom { font-size:12px; color:var(--muted); letter-spacing:3px; margin-bottom:4px; }
+
+  .type-breakdown { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:16px; }
+  .breakdown-title { font-size:11px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:16px; }
+  .breakdown-row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .breakdown-row:last-child { margin-bottom:0; }
+  .breakdown-type { font-size:12px; color:var(--muted); width:80px; flex-shrink:0; }
+  .breakdown-bar-wrap { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .breakdown-bar { height:100%; border-radius:3px; transition:width 1s ease 0.3s; }
+  .breakdown-val { font-family:'DM Serif Display',serif; font-size:16px; color:var(--gold2); width:40px; text-align:right; flex-shrink:0; }
+
+  .advice-box { background:var(--card); border:1px solid var(--border); border-left:3px solid var(--teal); border-radius:0 16px 16px 0; padding:18px 20px; margin-bottom:20px; font-size:13px; line-height:1.9; color:#b0a898; }
+  .advice-label { font-size:10px; letter-spacing:3px; color:var(--teal); text-transform:uppercase; margin-bottom:8px; }
+
+  .result-btns { display:flex; gap:10px; }
+  .retry-btn { flex:1; background:linear-gradient(135deg,var(--gold),var(--gold2)); border:none; border-radius:14px; padding:16px; color:#1c1917; font-family:'Noto Sans JP',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.2s; }
+  .retry-btn:hover { opacity:0.9; transform:translateY(-2px); }
+  .home-btn { flex:1; background:transparent; border:1px solid var(--border); border-radius:14px; padding:16px; color:var(--muted); font-family:'Noto Sans JP',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.2s; }
+  .home-btn:hover { border-color:var(--warm); color:var(--warm); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ===== HOME ===== -->
+<div id="homeScreen">
+  <div class="home-header">
+    <div class="home-eyebrow">Knowledge Game</div>
+    <div class="home-title">The Quiz</div>
+    <div class="home-sub">ジャンルを選んでスタート</div>
+  </div>
+
+  <div class="section-label">ジャンルを選ぶ</div>
+  <div class="genre-grid">
+
+    <div class="genre-card" style="--genre-color:#4ab8a8" onclick="selectGenre('mindreader')">
+      <span class="genre-count">100問</span>
+      <span class="genre-icon">🔍</span>
+      <div class="genre-name">心を読む</div>
+      <div class="genre-desc">会話・表情・行動から相手の本音を読む</div>
+    </div>
+
+    <div class="genre-card" style="--genre-color:#e87080" onclick="selectGenre('love')">
+      <span class="genre-count">100問</span>
+      <span class="genre-icon">💘</span>
+      <div class="genre-name">モテ・コミュ力</div>
+      <div class="genre-desc">会話術・自己磨き・関係構築のコツ</div>
+    </div>
+
+    <div class="genre-card" style="--genre-color:#a06cd5" onclick="selectGenre('fourp')">
+      <span class="genre-count">100問</span>
+      <span class="genre-icon">📊</span>
+      <div class="genre-name">マーケティング4P</div>
+      <div class="genre-desc">CMOになって戦略を判断する実践クイズ</div>
+    </div>
+
+    <div class="genre-card" style="--genre-color:#5ba8f5" onclick="selectGenre('bizword')">
+      <span class="genre-count">100問</span>
+      <span class="genre-icon">💼</span>
+      <div class="genre-name">ビジネス用語</div>
+      <div class="genre-desc">Web・マーケ・経営の必須単語を学ぶ</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== GENRE SCREEN ===== -->
+<div id="genreScreen">
+  <button class="back-btn" onclick="goHome()">← ジャンル選択に戻る</button>
+  <div class="genre-hero" id="genreHero">
+    <span class="genre-hero-icon" id="genreHeroIcon">🔍</span>
+    <div class="genre-hero-name" id="genreHeroName">心を読む</div>
+    <div class="genre-hero-desc" id="genreHeroDesc"></div>
+  </div>
+  <select class="count-select" id="countSelect">
+    <option value="10">10問モード（約5分）</option>
+    <option value="20">20問モード（約10分）</option>
+    <option value="30">30問モード（約15分）</option>
+  </select>
+  <button class="play-btn" id="playBtn" onclick="startGame()">スタート →</button>
+</div>
+
+<!-- ===== GAME ===== -->
+<div id="gameScreen">
+  <button class="back-btn" onclick="goHome()" style="margin-bottom:12px">← ホームへ戻る</button>
+  <div class="hud" id="hud">
+    <div class="hud-stat"><div class="hud-label">問題</div><div class="hud-val" id="hudQ">1/10</div></div>
+    <div class="hud-div"></div>
+    <div class="hud-stat"><div class="hud-label">正解</div><div class="hud-val accent" id="hudScore">0</div></div>
+    <div class="hud-div"></div>
+    <div class="hud-stat"><div class="hud-label">連続正解</div><div class="hud-val" id="hudStreak">0🔥</div></div>
+  </div>
+
+  <div class="type-badge" id="typeBadge">💬 会話</div>
+  <div class="q-card">
+    <div class="q-scene">
+      <div class="q-scene-label">場面</div>
+      <div class="q-scene-text" id="sceneText"></div>
+    </div>
+    <div class="q-body">
+      <div class="q-text" id="qText"></div>
+      <div class="options" id="options"></div>
+    </div>
+  </div>
+
+  <div class="explain-box" id="explainBox">
+    <div class="explain-header">
+      <span class="explain-icon" id="explainIcon">💡</span>
+      <span class="explain-title" id="explainTitle">解説</span>
+      <span class="explain-result" id="explainResult"></span>
+    </div>
+    <div class="explain-body">
+      <div class="explain-why" id="explainWhy"></div>
+      <div class="tip-box">
+        <div class="tip-label">💡 実践のコツ</div>
+        <div class="tip-text" id="tipText"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="words-box" id="wordsBox">
+    <div class="words-box-label">📖 用語解説</div>
+    <div id="wordsContent"></div>
+  </div>
+
+  <button class="next-btn" id="nextBtn" onclick="nextQ()">次へ →</button>
+</div>
+
+<!-- ===== RESULT ===== -->
+<div id="resultScreen">
+  <div class="result-top">
+    <div class="result-hero">
+      <span class="result-big-emoji" id="resultEmoji">🏆</span>
+      <div class="result-rank" id="resultRank"></div>
+      <div class="result-sub" id="resultSub"></div>
+    </div>
+    <div class="result-score-area">
+      <div class="result-score-num" id="resultNum">0</div>
+      <div class="result-score-denom" id="resultDenom">正解 / 10問</div>
+    </div>
+  </div>
+  <div class="type-breakdown" id="typeBreakdown"></div>
+  <div class="advice-box" id="adviceBox">
+    <div class="advice-label">🌱 今後のヒント</div>
+    <div id="adviceText"></div>
+  </div>
+  <div class="result-btns">
+    <button class="retry-btn" onclick="retryGame()">もう一度</button>
+    <button class="home-btn" onclick="goHome()">ホームへ</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===================================================
+// データ定義
+// ===================================================
+
+const GENRES = {
+  mindreader: {
+    name: '心を読む',
+    icon: '🔍',
+    color: '#4ab8a8',
+    desc: '日常の会話・表情・行動・ビジネス場面から相手の本音を読み取るトレーニング。100問からランダム出題。',
+    types: [
+      {key:'conv', label:'💬 会話', color:'#4ab8a8'},
+      {key:'body', label:'👁️ 表情', color:'#d4a843'},
+      {key:'biz',  label:'💼 仕事', color:'#c8614a'},
+    ],
+    advice: {
+      conv: '会話の裏読みは「言葉よりも間・タイミング・その後の行動」に注目する練習を。言葉はコントロールできますが、沈黙や間は本音が出やすいです。',
+      body: '表情・行動の読解は「上半身（表情）と下半身（足・姿勢）のずれ」を意識するのがコツ。顔は嘘をつけますが体は正直です。',
+      biz:  'ビジネス場面での読解力は「発言の後のアクション（次の約束・具体的な質問）があるか」を観察することで向上します。',
+    },
+    maxCount: 30,
+  },
+  love: {
+    name: 'モテ・コミュ力',
+    icon: '💘',
+    color: '#e87080',
+    desc: '会話術・自己磨き・デートの誘い方・関係構築のコツを学ぶクイズ。30問からランダム出題。',
+    types: [
+      {key:'talk',  label:'💬 会話術',   color:'#e87080'},
+      {key:'mind',  label:'🧠 マインド', color:'#a06cd5'},
+      {key:'date',  label:'📅 デート',   color:'#d4a843'},
+    ],
+    advice: {
+      talk:  '会話は「I→You→We」の順で進めると距離が縮まります。まず相手の話を引き出し、共通の世界を作っていきましょう。',
+      mind:  '自信は外見・知識・体を磨くことで自然と身につきます。モテの本質は「この人と一緒にいると楽しい」と思わせること。',
+      date:  'デートは計画より「一緒に楽しむ姿勢」が大切。あなたが楽しめば相手も楽しくなります。',
+    },
+    maxCount: 100,
+  },
+  bizword: {
+    name: 'ビジネス用語',
+    icon: '💼',
+    color: '#5ba8f5',
+    desc: 'Webデザイン・マーケティング・経営の必須ビジネス用語を単語の意味を答える形式で学ぶ。100問からランダム出題。',
+    types: [
+      {key:'web',  label:'🖥️ Web・デザイン', color:'#5ba8f5'},
+      {key:'mkt',  label:'📊 マーケティング', color:'#4ab8a8'},
+      {key:'biz',  label:'💡 経営・ビジネス',  color:'#d4a843'},
+    ],
+    advice: {
+      web:  'Webデザイン用語はUI/UX・レスポンシブ・ファーストビューなど実務直結の言葉が多いです。実際のサイトを見ながら覚えると定着が早いです。',
+      mkt:  'マーケティング用語はKPI・ROI・CVRなど数字に関わるものが多いです。実際のデータと紐づけて覚えましょう。',
+      biz:  'ビジネス用語はMTG・アジェンダ・コンセンサスなど日常業務で頻出のものを優先して覚えましょう。',
+    },
+    maxCount: 100,
+  },
+  fourp: {
+    name: 'マーケティング4P',
+    icon: '📊',
+    color: '#a06cd5',
+    desc: 'あなたはCMO（最高マーケティング責任者）。Product・Price・Place・Promotionの4つの視点でビジネス戦略を判断する実践クイズ。100問からランダム出題。',
+    types: [
+      {key:'product',  label:'📦 Product',   color:'#a06cd5'},
+      {key:'price',    label:'💰 Price',      color:'#d4a843'},
+      {key:'place',    label:'🏪 Place',      color:'#4ab8a8'},
+      {key:'promotion',label:'📣 Promotion',  color:'#e87080'},
+    ],
+    advice: {
+      product:  'Product（製品）戦略は「誰の・どんな問題を・どう解決するか」が明確であることが基本。競合との差別化は機能より「価値」で考えましょう。',
+      price:    'Price（価格）戦略は単なる値付けではなく「どんな顧客に・どんな価値を・どう届けるか」の設計です。価格はブランドイメージにも直結します。',
+      place:    'Place（流通）戦略は「どこで・誰に・どう届けるか」がポイント。オンライン・オフライン・直販・代理店など最適なチャネルを選びましょう。',
+      promotion:'Promotion（販促）戦略は「誰に・何を・どのタイミングで伝えるか」が重要。ターゲットの行動パターンに合わせた媒体選びが鍵です。',
+    },
+    maxCount: 100,
+  },
+};
+
+// ===================================================
+// 心を読む 問題データ (100問)
+// ===================================================
+const MINDREADER_Q = [
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'同僚に「今日の会議での私の提案どうだった？」と聞くと、少し間を置いてから「<span class="hl">よく考えられてたと思うよ</span>」と答えた。',q:'この同僚の本音として最も近いのは？',opts:['本当に良い提案だと思っている','正直あまり良いと思っていないが傷つけたくない','内容より発表の仕方を評価している','自分の意見がまだまとまっていない'],correct:1,why:'「間を置く」＋「よく考えられてた（努力を褒める）」は直接評価を避けるクッション言葉です。本当に良いと思えば即「良かった！」と出るのが自然。',tip:'「よく考えられてた」「面白い視点だね」は内容でなく姿勢を褒める言葉。本音を隠すパターンとして覚えておきましょう。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'友人が「最近どう？」と聞いてきた。仕事の愚痴を少し話すと「<span class="hl">それは大変だったね。ところで…</span>」と話題を変えた。',q:'この友人の内面として最も近いのは？',opts:['あなたの話に深く共感している','自分も話したいことがあって少し焦っている','あなたの話が理解できなかった','もっと深く聞こうとしている'],correct:1,why:'短い共感のあとすぐ話題転換するのは「形だけ共感→自分の話題に移行」のパターン。本当に聞きたい人は「どういうこと？」と掘り下げます。',tip:'「大変だったね」の後に「で、どうしたの？」が来るか「ところで…」が来るかで相手の関心度がわかります。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'上司に「このレポート、来週末でいいよ」と言われた。しかし翌日から何度も「<span class="hl">あのレポート進んでる？</span>」と確認してくる。',q:'上司の本当のニーズは？',opts:['来週末に本当に余裕で間に合う','実は早く欲しいが無理を言いたくない','レポートの存在を忘れないために確認している','あなたの仕事のペースを把握したい'],correct:1,why:'言葉と行動が矛盾しています。頻繁な確認は「本当は急いでいる」サイン。行動は言葉より正直です。',tip:'相手の言葉と行動が矛盾したとき、行動を優先して読みましょう。確認頻度は"本当の締め切り感"を表しています。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'パートナーが「別に怒ってないよ」と言っているが、<span class="hl">返事が短く目が合わない</span>状態が続いている。',q:'この状況で最も正確に読み取れることは？',opts:['本当に怒っていないが疲れている','怒っているが認めたくないか言葉にできていない','気づいてほしいサインを出している','BとCの両方の可能性がある'],correct:3,why:'言葉と態度が矛盾する「感情の否認」パターン。自分の怒りを認めるのが難しかったり、察してほしい気持ちが混在しています。',tip:'「怒ってない」＋明らかに怒った態度のときは責めずに「何かあった？」と優しく入口を作るのが効果的です。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'飲み会の誘いに対して友人が「<span class="hl">行けたら行く</span>」と返信してきた。',q:'この返信の実際の意味として最も近いのは？',opts:['本当に予定次第で参加する気がある','ほぼ断りだが直接断りにくい','場所や時間によって決めたい','誰が来るか気になっている'],correct:1,why:'「行けたら行く」は日本語の典型的なやんわり断り表現。本当に行く気なら「何時から？」「場所どこ？」と具体的な質問が来ます。',tip:'「行けたら行く」「検討します」「また連絡する」はセットで"遠回しな断り"三大表現として覚えておきましょう。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'意見を言ったとき、相手が「<span class="hl">なるほどね〜</span>」とだけ返して黙った。',q:'相手の心理として最も可能性が高いのは？',opts:['深く納得して考えている','同意していないが反論したくない','理解できなかった','もっと詳しく聞きたい'],correct:1,why:'「なるほど」は同意でなく「受け取った」サインのことが多い。その後に沈黙や話題転換が来る場合は反論・疑問を持ちながら口に出せない状態です。',tip:'「なるほど」のあとに「でも…」や「つまり…？」が来るか沈黙が来るかで相手の本音がわかります。'},
+  {type:'body',typeLabel:'👁️ 表情・行動',scene:'会議中にアイデアを話している。隣の同僚が腕を組み、<span class="hl">体をわずかに後ろに引き</span>ながらうなずいている。',q:'この同僚の内面として最も読み取れるのは？',opts:['積極的に賛成している','心理的に距離を置いている','寒くて腕を組んでいるだけ','集中して考えている'],correct:1,why:'腕を組む（クローズドポジション）＋体を引くのは防衛・懐疑のサインです。うなずきは礼儀的なものになっています。',tip:'賛成している人は体が前のめりになりオープンな姿勢を取ります。腕組み＋後退のセットは「表面的な賛同」サインです。'},
+  {type:'body',typeLabel:'👁️ 表情・行動',scene:'友人に悩みを相談した。友人は話を聞きながら<span class="hl">スマホをテーブルに伏せて置き直し</span>、目を見てうなずいている。',q:'この行動が示す最も正確な意味は？',opts:['スマホの画面が気になっている','本気でちゃんと聞こうとしている','習慣的な行動で特に意味はない','話が難しくて集中しようとしている'],correct:1,why:'スマホを伏せる行為は「今のあなたを優先する」という意図的なシグナル。アイコンタクト＋うなずきと組み合わさると強い関心の表れです。',tip:'相手がスマホを伏せる・遠ざける行動はあなたへの敬意と関心の表れです。'},
+  {type:'body',typeLabel:'👁️ 表情・行動',scene:'パーティーで初対面の人と話している。相手は笑顔で話してくれているが、<span class="hl">足先があなたとは別の方向</span>を向いている。',q:'この人の本音に最も近いのは？',opts:['あなたとの会話を楽しんでいる','心はどこか別のところにある','緊張して体が固まっている','足の向きは偶然で意味はない'],correct:1,why:'足先は「本当に行きたい方向」を向くと言われます。顔と足先が不一致の場合、笑顔は社交的礼儀で心は既に次の場所に向かっています。',tip:'会話中に相手の足先を意識してみてください。足があなたを向いていれば関心あり、横や出口方向なら「そろそろ行きたい」サインです。'},
+  {type:'biz',typeLabel:'💼 ビジネス場面',scene:'提案を聞いた取引先が「<span class="hl">前向きに検討します</span>」と笑顔で帰っていった。',q:'この返答の実際の意味として最も近いのは？',opts:['本当に採用を前向きに検討している','ほぼ断りだが直接断りにくい','上司に相談してから決める','条件交渉をしたい'],correct:1,why:'ビジネスで「前向きに検討します」は事実上の断り表現。本当に興味があれば「具体的にはいつごろ？」と次のステップに踏み込んできます。',tip:'「前向きに」「検討します」「また連絡します」は"やんわり断り"三大表現。次のアクションが出ないときは要注意。'},
+  {type:'biz',typeLabel:'💼 ビジネス場面',scene:'チームミーティングで意見を求めると、<span class="hl">全員が黙ってしまった</span>。リーダーの目が自分に向いている。',q:'この沈黙の最も可能性の高い理由は？',opts:['全員が本当に意見を持っていない','リーダーの顔色を伺って発言をためらっている','質問の意図が伝わっていない','全員が同意している'],correct:1,why:'組織の沈黙の多くは「意見がない」ではなく「言っていいか不安」から来ます。集団思考（グループシンク）が起きています。',tip:'意見を引き出すには「反対意見も歓迎」と明示するか「あえて問題点を挙げるとしたら？」と聞く方が本音が出やすいです。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'頼みごとをしたら相手が「<span class="hl">ちょっと難しいかも…</span>」と言った。',q:'この返答の正しい解釈は？',opts:['技術的に難しくて本当にできない','断りたいが言い方を考えている','もう少し条件が変われば受ける','一旦保留にしたい'],correct:1,why:'「難しいかも」は多くの場合"断り"の婉曲表現。技術的問題ではなくやりたくないとき使われます。',tip:'「難しい」と言われたら「何があれば可能になりますか？」と聞いてみましょう。本当の理由が見えてきます。'},
+  {type:'body',typeLabel:'👁️ 表情・行動',scene:'楽しそうに話しているとき、相手が<span class="hl">あなたの動作を少し真似している</span>ことに気づいた。',q:'この行動が示すことは？',opts:['あなたをからかっている','無意識にあなたに好感を持ちシンクロしている','習慣的な動作','集中して聞いている'],correct:1,why:'ミラーリング（動作の模倣）は無意識に起きる親近感・好意のサイン。人は気に入った相手の動作を自然に真似ます。',tip:'相手が自分の動作を真似していたら、好意的に見られているサインです。ミラーリングを意図的に使うと親近感を高められます。'},
+  {type:'biz',typeLabel:'💼 ビジネス場面',scene:'同僚が「この仕事、<span class="hl">誰でもできますよね</span>」とあなたに言った。その仕事をあなたが担当するかどうかの話し合いの最中。',q:'この発言の意図として最も自然なのは？',opts:['その仕事を自分がやりたくない','あなたの能力を試している','仕事の重要性を説明している','あなたなら簡単にできると褒めている'],correct:0,why:'「誰でもできる」はその仕事を避けるための価値低下表現。自分がやるほどではないという言い訳を先に作っています。',tip:'仕事を押し付けたいとき人は「簡単・誰でもできる」と表現します。逆に自分がやりたい仕事は「重要・自分が適任」と言います。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'プレゼン後に上司から「<span class="hl">悪くはないね</span>」と言われた。',q:'上司の本音として最も近いのは？',opts:['良い出来だと思っている','合格点だが満足はしていない','改善点がたくさんある','もう一度やり直してほしい'],correct:1,why:'「悪くはない」は「良い」ではありません。否定的な表現を避けながらも積極的な評価を避けた二重否定。及第点だが期待以下というニュアンスです。',tip:'「悪くはない」「まあ良いんじゃない」は消極的肯定。「良かった！」と直接言う言葉とは区別しましょう。'},
+  {type:'body',typeLabel:'👁️ 表情・行動',scene:'謝罪しているとき、相手が<span class="hl">視線をそらし、腕を組んでいる</span>。',q:'この様子が示すことは？',opts:['謝罪を受け入れた','まだ怒りや不満が解消されていない','恥ずかしがっている','考え中'],correct:1,why:'視線をそらす（拒絶）＋腕を組む（防衛）のコンビは、感情的に閉じた状態のサインです。言葉で「いいよ」と言っても体が本音を示しています。',tip:'謝罪後に相手が腕を組んでいたら、もう少し気持ちを聞く機会を作りましょう。「本当にごめんね、何か言いたいことある？」と。'},
+  {type:'biz',typeLabel:'💼 ビジネス場面',scene:'部下が「頑張ります」と言ったが、<span class="hl">具体的な計画を一切述べなかった</span>。',q:'この状況から読み取れることは？',opts:['やる気にあふれている','方法がわかっていないか、本当にやる気がない','自分で考えたい','報告が苦手なだけ'],correct:1,why:'「頑張ります」のみで具体的なアクションプランがない場合、何をすべきかわかっていないか、本当はやりたくないかのどちらかです。',tip:'「頑張ります」と言われたら「具体的に最初の一歩は何をするつもり？」と聞くことで理解度ややる気の本質がわかります。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'相手に感想を求めると「<span class="hl">人それぞれだと思うけど…</span>」と言い始めた。',q:'この前置きの心理的な意味として最も近いのは？',opts:['客観的な視点から話そうとしている','自分の意見を言うことを避けている','相手の意見を尊重している','一般的な正解を探している'],correct:1,why:'「人それぞれ」は意見を持ちながらも表明を避けたいときの回避表現です。自分の意見が批判されることへの防衛線として使われます。',tip:'「人それぞれ」と言われたら「あなた自身はどう感じた？」と個人の感想に絞って聞き直しましょう。'},
+  {type:'body',typeLabel:'👁️ 表情・行動',scene:'断られた後、相手が「<span class="hl">口元は微笑んでいるが目は笑っていない</span>」状態で話している。',q:'この表情が示すことは？',opts:['緊張して笑顔が固まっている','作り笑いで本音とは別の感情がある','疲れていて筋肉が動きにくい','本当に笑顔'],correct:1,why:'本物の笑顔（デュシェンヌスマイル）は目の周りの筋肉も動きます。口だけの笑顔は作られたもの。断った後の罪悪感を隠すための社交的表情です。',tip:'目が笑っているかどうかが本物の笑顔の見分け方。目尻にしわが寄っているかを確認しましょう。'},
+  {type:'biz',typeLabel:'💼 ビジネス場面',scene:'企画の感想を聞いたら「<span class="hl">斬新ですね</span>」とだけ言われた。',q:'「斬新」という評価の本音として最も近いのは？',opts:['高く評価している','珍しいが良いかどうかわからない','明らかに否定している','実現可能か疑っている'],correct:1,why:'「斬新」はポジティブに聞こえますが、評価が定まっていないときの安全な言葉です。「面白い」「良い」より一歩引いた反応で、様子見の状態です。',tip:'「斬新」と言われたら「どんな点がそう感じましたか？」と掘り下げましょう。本当の評価が見えてきます。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'悩みを話したとき、相手がすぐに「<span class="hl">それはこうすれば良いんじゃない？</span>」と解決策を出した。',q:'この反応の背景にある心理として最も近いのは？',opts:['あなたの問題を真剣に解決しようとしている','話を聞くより解決する方が得意・楽','あなたを助けたい','問題が単純だと思っている'],correct:1,why:'悩みを聞いてすぐ解決策を出す人は、感情的サポートより問題解決モードに入りやすいタイプです。「聞いてほしいだけ」という気持ちを満たせないことがあります。',tip:'解決策を急に出されて「そうじゃなくて…」と感じたら「まずちょっと聞いてほしいだけなんだけど」と先に伝えましょう。'},
+  {type:'body',typeLabel:'👁️ 表情・行動',scene:'会話中に相手が何度も<span class="hl">自分の首・耳たぶを触っている</span>。',q:'この行動の心理的な意味として最も近いのは？',opts:['首や耳が痒い','緊張・不安・ストレスを感じている','思考を整理しようとしている','あなたに好意がある'],correct:1,why:'首・耳・顔を触るセルフタッチングは、ストレスや不安を和らげるための自己なだめ行動です。',tip:'相手が突然首を触り始めたら、直前に何を話したか覚えておきましょう。そのトピックが相手の緊張ポイントです。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'連絡が来なくて「どうしたの？」と聞いたら「<span class="hl">ちょっとバタバタしてて</span>」と返ってきた。',q:'この返答の意味として最も近いのは？',opts:['本当に忙しかった','距離を置きたいが直接言いにくい','体調が悪かった','あなたへの連絡を忘れていた'],correct:1,why:'「バタバタ」は幅広い状況をカバーする便利な理由。本当に忙しい人は「仕事でこんなことがあって」と具体的に話します。漠然とした「バタバタ」は距離のサインのことがあります。',tip:'「バタバタ」の返答後に会話が弾むか確認しましょう。その後も素っ気なければ距離感の変化が起きているかもしれません。'},
+  {type:'biz',typeLabel:'💼 ビジネス場面',scene:'上司が会議で「<span class="hl">これは私の意見ではないけど</span>」と前置きして提案を出した。',q:'この前置きの本当の意味は？',opts:['本当に自分の意見でない','自分の意見だが責任を分散させたい','客観的に見えるようにしたい','上からの指示を伝えている'],correct:1,why:'「私の意見ではないけど」は自分の意見の責任を薄める心理的回避。批判されたときの逃げ道を作りながら提案できる便利な前置きです。',tip:'「私の意見ではないけど」と言った人の提案は実はその人の意見であることが多い。内容そのものを評価しましょう。'},
+  {type:'body',typeLabel:'👁️ 表情・行動',scene:'重要な話をしているとき、相手が<span class="hl">目を細めて少し頭を傾けた</span>。',q:'この表情・動作が示す心理は？',opts:['話が信じられない','情報を処理しようと集中している','不快感を感じている','眠い'],correct:1,why:'目を細める＋頭を傾けるのは「もっと詳しく理解したい」という深い関心と集中のサインです。',tip:'相手が頭を傾けて聞いているときはしっかり関心を持たれています。詳しく話してあげると喜ばれます。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'相手が「<span class="hl">そういう考え方もあるよね</span>」と言った。',q:'この発言が示すことは？',opts:['あなたの意見に賛成した','あなたの意見を認めつつ自分は別の意見を持っている','中立な立場でいる','あなたの意見に感心した'],correct:1,why:'「そういう考え方もある」は「でも自分はそう思わない」が続く婉曲な反対表現です。完全な否定を避けながら自分の立場を守る言い方です。',tip:'「そういう考え方もある」と言われたら「あなたはどう思う？」と聞くと真の意見が出てきます。'},
+  {type:'body',typeLabel:'👁️ 表情・行動',scene:'困った顔をしているのに「<span class="hl">大丈夫</span>」と言っている。',q:'この状況の正しい読み方は？',opts:['本当に大丈夫','困っているが助けを求めることへの抵抗がある','気を遣っている','本当に大丈夫かどうか自分でもわからない'],correct:1,why:'困った表情と「大丈夫」の矛盾では表情の方が正直です。助けを求めることへの恥ずかしさや迷惑をかけたくない気持ちから「大丈夫」と言います。',tip:'「大丈夫？」と聞いて「大丈夫」と言われても表情が暗ければ「何かできることある？」と別の角度から入ってみましょう。'},
+  {type:'biz',typeLabel:'💼 ビジネス場面',scene:'新しいアイデアを提案したら、上司が「<span class="hl">面白いね、ただタイミングが…</span>」と言った。',q:'この返答の本音として最も近いのは？',opts:['本当にタイミングが問題','アイデア自体に問題があるが直接言いにくい','検討する価値があると思っている','別の担当者に任せたい'],correct:1,why:'「タイミングが…」はアイデアへの直接的な批判を避けるときの定番表現。「良いけど今じゃない」は多くの場合「良いとは思っていない」の婉曲表現です。',tip:'「タイミングが」と言われたら「では適切なタイミングはいつですか？」と聞いてみましょう。具体的な日程が出なければ実質的な断りです。'},
+  {type:'conv',typeLabel:'💬 会話シナリオ',scene:'アドバイスをしたとき、相手が「<span class="hl">そうですね、参考にします</span>」と言った。',q:'この返答の意味として最も近いのは？',opts:['アドバイスに感謝して実践する','礼儀的に受け取ったが実践するかは未定','アドバイスが刺さった','もっと詳しく聞きたい'],correct:1,why:'「参考にします」は「聞きました」という受取確認で、実践の約束ではありません。本当に響いたときは「具体的にどうすれば？」と追加質問が来ます。',tip:'「参考にします」で終わったアドバイスは流されがち。実践してほしいなら「来週一緒に確認しようか？」と具体的なフォローを入れましょう。'},
+];
+
+// ===================================================
+// 恋愛・モテ 問題データ (30問)
+// ===================================================
+const LOVE_Q = [
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性との会話で、自分の武勇伝や好きなことばかり話してしまっている。',q:'モテる会話スタイルとして最も正しいのは？',opts:['自分の面白い話をたくさんする（I型）','「何が好き？」と相手に質問する（You型）','「俺たち相性いいかもね」と二人の世界を作る（We型）','共通の趣味を探して合わせる'],correct:2,why:'「I」の会話は自己中心的、「You」は普通の質問型、「We」で初めて特別な関係感が生まれます。「俺たち」という言葉が二人の間に特別な空間を作ります。',tip:'「一緒に〜行ったら楽しそう」「なんか俺たち波長合うよね」のような"We"の言葉を意識的に使いましょう。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'初対面の女性と話していて会話が続かなくなってきた。',q:'最も効果的な対応はどれ？',opts:['次々と質問を投げかける','自分が15〜30秒ちょい出しをしてから相手に振る','沈黙を避けるために早口で話す','共通の話題が見つかるまで雑談を続ける'],correct:1,why:'先に自分が少し話してから振ると相手も話しやすくなります。質問だけでは尋問になってしまい、会話が続きません。',tip:'「俺は〇〇が好きなんだけど、〇〇ちゃんはどう？」という形で自分を少し出してから振るのがコツです。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性に「服かっこいいね！」と褒められた。',q:'最もモテる返し方は？',opts:['「そんなことないよ〜」と謙遜する','「ありがとう！〇〇ちゃんもセンスいいよね」と褒め返す','「どこで買ったか教えようか？」と話を広げる','照れて黙ってしまう'],correct:1,why:'謙遜は非モテのすること。褒め言葉を堂々と受け取り、褒め返しで相手を喜ばせるのが一流の返し方です。「〇〇ちゃんに褒められると嬉しいな」も効果的。',tip:'褒められたら「そんなことない」ではなく「ありがとう、〇〇ちゃんも〜だよね」と自信を持って受け取り、褒め返しましょう。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'好きな女性の前でカッコよく見せようと必死になってしまっている。',q:'本当に魅力的に見える姿勢として正しいのは？',opts:['完璧な姿を見せようと全力でキメる','ユーモアで笑わせることに集中する','一緒にいて自分自身が楽しんでいる姿を見せる','相手の趣味に全て合わせる'],correct:2,why:'「人は鏡」。自分が楽しめば相手も楽しくなります。カッコつけた男より「私と一緒にいて楽しそうにしてる男」の方がよっぽど魅力的に映ります。',tip:'デートでは「楽しませなければ」ではなく「一緒に楽しもう」という気持ちで臨みましょう。その方が自然体でいられます。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性と会話中に沈黙が訪れた。',q:'最も効果的な対応は？',opts:['焦って次の話題を詰め込む','「ごめん、話下手で…」と謝る','微笑んで「なんか話しやすいね」と言う','無難な質問で場を繋ぐ'],correct:2,why:'沈黙を「気まずい」ではなく「居心地の良さ」に変換する一言。自分の評価を下げず、むしろ親密さを演出できます。',tip:'沈黙は「間が持たない」のではなく「二人の空間」です。焦らず微笑むだけでも雰囲気が良くなります。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デートで盛り上がる話題を選ぶとき、最も効果的な組み合わせは？',q:'会話が最も深まる話題の順番は？',opts:['最近ハマっていること→過去の思い出→一緒にやりたいこと','仕事の話→家族の話→将来の話','好きな芸能人→趣味→恋愛観','出身地→学歴→仕事'],correct:0,why:'現在（ハマっていること）→過去を共有→未来を一緒に想像する流れが最も自然に距離を縮めます。過去を知ることで「この人だけが私の過去を知っている」という特別感が生まれます。',tip:'「最近ハマってること何？」から始めて、「昔はどんな子だったの？」と過去に掘り下げ、「一緒に〜行きたいな」と未来に繋げましょう。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性から「モテそうだよね」と言われた。',q:'最もモテる返し方は？',opts:['「そんなことないよ」と否定する','「〇〇ちゃんも素敵だよ」と褒め返す','「なんで？」と照れながら聞く','「実はそうなんだよね笑」と受け入れる'],correct:1,why:'女の子は「私の褒めに対してどんな返答が出来るか？」を見ています。褒め返しで相手を喜ばせることが一流の返しです。謙遜はモテない男のすることです。',tip:'褒められたとき「〇〇ちゃんに言われると嬉しいな」と相手の名前を入れると、より個人的な温かみが生まれます。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'女性と接するときに使うべき言葉の習慣として正しいのは？',q:'普段から口癖にすると良い言葉の組み合わせは？',opts:['「すごい」「さすが」「かっこいい」','「好き」「素敵」「かわいい」「一緒に」','「頑張ってるね」「えらい」「大丈夫」','「面白い」「なるほど」「確かに」'],correct:1,why:'「好き」「素敵」「かわいい」「一緒に」の4つは感情に直接響く言葉です。物に対して「かわいい！」、景色に「素敵！」と使うことで女子語が自然に身につきます。',tip:'「この映画めっちゃ好き」「かわいい！（物を見て）」のように会話の中で自然に使うことで、感受性が豊かな印象を与えられます。'},
+  {type:'date',typeLabel:'📅 デート',scene:'LINEでデートに誘うとき、最も返事をもらいやすいメッセージの送り方は？',q:'効果的な誘い方はどれ？',opts:['「今度ご飯でもどう？」と漠然と誘う','「いつが空いてる？」と相手に決めさせる','「▲日と▲日どっちが来やすい？」と二択で聞く','「良ければ今度一緒に…」と遠回しに伝える'],correct:2,why:'二択で聞くことで相手が悩む時間を減らし、返事のハードルを下げられます。「いつでもいい」は相手に手間をかけさせすぎて断られやすくなります。',tip:'「▲日の夜か▲日の夜、どっちが来やすい？」という形で具体的な選択肢を出すのが最も返事をもらいやすい誘い方です。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性と話すときに避けるべき話し方として正しいのはどれ？',q:'印象を下げやすい話し方の特徴は？',opts:['ゆっくり分かりやすく話す','声を大きく張る','早口で声が小さく語尾を伸ばす','間を持たせながら話す'],correct:2,why:'早口・声小さい・語尾を伸ばすはすべて減点ポイントです。自信のなさや緊張が伝わり、魅力が半減します。ゆっくり・明確・強い声が基本です。',tip:'「ゆっくり・大きく・語尾を切る」の3つを意識するだけで話し方の印象が大幅に変わります。まず声の大きさから改善しましょう。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'女性と接するときに一番大切な姿勢は何か？',q:'女性と接する際に常に意識すべきことはどれ？',opts:['常に面白いことを言って場を盛り上げる','どんな場面でも否定せず価値観を認める','相手の言う通りに全て従う','高価なプレゼントを贈る'],correct:1,why:'「どんな場面でも否定しない」「価値観を優しく認める」ことが最も大切。全て従うのは舐められる原因になります。相手を肯定しながら自分の軸は保つバランスが重要。',tip:'相手の意見を「それいいね」「そういう考え方もあるね」と認めつつ、自分の意見もしっかり伝える。これが対等で魅力的な関係を作ります。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性が「やりたいだけじゃん」「どうせ男はみんなそう」と言ってきた。',q:'この状況で最も効果的な返し方は？',opts:['「違うよ、本当に好きなんだよ」と真剣に否定する','笑いながら「そう思うの？面白いね」とかわす','「ひどいな〜、そんなこと言わないでよ」と甘える','「そういうこと自分から言わない方がいいよ」と落ち着いて言う'],correct:3,why:'感情的に反論するほど相手のペースになります。落ち着いた大人の対応で動じないことが、かえって余裕と自信を示し魅力的に映ります。',tip:'挑発的な言葉に動じない落ち着きが「この人はしっかりしている」という印象を与えます。感情的な反応は避けましょう。'},
+  {type:'date',typeLabel:'📅 デート',scene:'会話を盛り上げるための具体的なテクニックとして最も効果的なのは？',q:'会話が弾む方法として正しいのはどれ？',opts:['盛り上がる話題をひたすら探す','女性の感情を代弁して「それって〇〇って感じだよね」と言う','自分の話を長くして場を支配する','できるだけ真面目な話題で知性を見せる'],correct:1,why:'感情を代弁することで「この人は私のことをわかってくれている」という特別な感覚を作れます。これは会話の中で最も距離を縮めるテクニックの一つです。',tip:'「それってすごく嬉しかったんじゃない？」「悔しかったよね、それは」と感情を先に言葉にしてあげると、相手は「わかってもらえた」と感じます。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'外見を磨く順番として最も効率が良いのはどれ？',q:'雰囲気イケメンになるために最初に取り組むべきことは？',opts:['高いブランド服を買い揃える','眉毛を整える・髪型を変える・姿勢を直す','筋トレで体を鍛える','高級時計などアクセサリーを揃える'],correct:1,why:'眉毛・髪型・姿勢はコストが低く、見た目への影響が最大です。眉毛サロン・マッシュ系の髪型・背筋を伸ばすだけで印象が劇的に変わります。',tip:'眉毛→髪型→姿勢の順で取り組むのが最もコスパが良い外見磨きです。まず眉毛サロンに行くことをおすすめします。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性に使うと喜ばれる特別感を出す言葉はどれ？',q:'相手に特別感を与えるのに最も効果的な言葉は？',opts:['「かわいいね」「好きだよ」','「〇〇ちゃんだけ」「初めて〇〇ちゃんに話したんだけど」','「みんなに言ってるんだけど」「よく言われるよ」','「実は〇〇が好きなんだ」「趣味が合うね」'],correct:1,why:'「〇〇ちゃんだけ」「初めて話した」という言葉は特別感を演出します。人は「自分だけに打ち明けてくれた」という体験に強く心を動かされます。',tip:'「実は〇〇ちゃんにしか言ってないんだけど…」という前置きは自己開示と特別感を同時に演出できる強力な一言です。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デート中に何かアクシデントが起きた（迷子になった、雨が降ってきたなど）。',q:'この状況でモテる対応はどれ？',opts:['謝り続けて申し訳なさそうにする','「最悪だな」とネガティブに反応する','一緒に笑って「こういうのも面白いね」と楽しむ','代替案を黙々と調べる'],correct:2,why:'アクシデントを一緒に笑って楽しめる男は非常に魅力的です。「出会ったら手放しちゃいけない」と思わせる関係はこういう瞬間に作られます。',tip:'ハプニングこそチャンス。「なんかドラマみたいだね笑」と一言言えると、そのデートが特別な思い出になります。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'「感情の言語化能力」を高める最も効果的な習慣は？',q:'自分の感情を豊かに表現できるようになる方法は？',opts:['毎日SNSを眺める','感情を詳細に書いた日記をつける','映画や本をたくさん見る','友人と毎日会話する'],correct:1,why:'「嬉しかった」ではなく「〇〇できてマジで嬉しい！頑張った甲斐あった！」のように詳細に書くことで感情の言語化能力が鍛えられます。これがトーク力にも直結します。',tip:'日記は「事実＋感情」で書きましょう。「今日〇〇があった。そのとき自分は〇〇と感じた。なぜなら…」という形式が最も鍛えられます。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性への質問の仕方で、より会話が深まるのはどちら？',q:'女性がより話したくなる質問の仕方は？',opts:['「好きなタイプは？」と直接聞く','「常に甘えてくる男って嫌いでしょ？」と具体的にイメージさせる','「どんな人が好きですか？」と丁寧に聞く','「タイプとかあるの？」とカジュアルに聞く'],correct:1,why:'具体的にイメージさせる質問は相手の思考を動かし、自然と話が膨らみます。「好きなタイプは？」は答えにくく、会話が止まりやすいです。',tip:'「〇〇な男って好きそうだよね」「〇〇って感じの子に見える」と決めつけ型の質問をすると相手は乗ってきやすくなります。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デートの前日や当日の朝に使えるメッセージとして最も効果的なのは？',q:'デート前に送ると好印象なメッセージは？',opts:['「今日楽しみにしてるね」とシンプルに送る','何も送らない（当日まで期待感を高める）','「ちゃんと来てよ笑」とおどけて送る','「今日の天気チェックしといて」と情報を送る'],correct:0,why:'「楽しみにしてる」という一言は相手に特別感と安心感を与えます。シンプルでもこの一言があるとデート当日の雰囲気が良くなります。',tip:'前日に「明日楽しみだな」と送るだけで相手もワクワク感が高まります。長文は不要、短い一言の方が自然です。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'テンションが低い状態でデートに行くことになってしまった。',q:'この状況でとるべき行動は？',opts:['テンションが低いことを正直に伝える','意図的に笑顔を作ってテンションを上げてから行く','デートをキャンセルする','なるべく話さずにやり過ごす'],correct:1,why:'「楽しい→笑う」だけでなく「笑う→楽しくなる」という脳と表情の関係があります。意図的に笑顔を作るだけでテンションが上がります。',tip:'デート前に好きな音楽を聴く・鏡の前で笑顔を作るなどで気分を上げましょう。自分が楽しめば相手も楽しくなります。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'過去の話を掘り下げることでどんな効果があるか？',q:'女性の過去（幼少期・学生時代）を深掘りする最大のメリットは？',opts:['共通点が見つかりやすくなる','「私の過去を知っている唯一の男」になれる','話題が尽きなくなる','相手の性格が分かるようになる'],correct:1,why:'過去を深掘りすることで、唯一無二の関係性が生まれます。「あの時の話を知っているのはあなただけ」という特別な絆が自然に作られます。',tip:'「小学校の頃って何が好きだった？」「中学の部活は何してたの？」と具体的に掘り下げましょう。誰でも自分の過去の話は嬉しいものです。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'モテない男に共通する言葉の習慣について正しいのはどれ？',q:'普段から使わない方が良い「非モテワード」はどれ？',opts:['「ありがとう」「嬉しい」「好き」','「無理」「疲れた」「すみません」「面倒くさい」','「なるほど」「確かに」「それいいね」','「頑張ります」「やってみます」「考えます」'],correct:1,why:'「無理」「疲れた」「すみません」「面倒くさい」はネガティブな印象を与え、一緒にいて楽しくない雰囲気を作ります。ポジティブワードに置き換えるだけで印象が変わります。',tip:'「無理」→「難しいな」、「疲れた」→言わない、「すみません」→「ありがとう」に変換するクセをつけましょう。'},
+  {type:'date',typeLabel:'📅 デート',scene:'女性に手間をかけさせることへの考え方として正しいのはどれ？',q:'女性に手間をかけてもらうことについて正しい認識は？',opts:['なるべく手間をかけさせないようにする','手間をかけてもらうことで愛着が生まれる','常に自分が全てやってあげるのが正解','手間をかけさせると嫌われる'],correct:1,why:'女性の「お世話したい欲求」を奪わないことが大切です。頼ることで相手は「この人に必要とされている」と感じ、関係が深まります。',tip:'「〇〇してもらえる？」と甘えることは関係を深めます。何でも自分でやってしまう男より、頼れる男の方が距離が縮まります。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'会話が苦手な人が最初に身につけるべきスキルはどれ？',q:'会話を弾ませるために最初に鍛えるべきことは？',opts:['面白い話題を見つける力','リアクションと興味を示す能力','話し続ける体力','知識を増やして話のネタを作る'],correct:1,why:'会話が盛り上がるかどうかはリアクション次第。「すごい！」「それってどういうこと？」という反応があれば話題が何でも盛り上がります。話題より反応が先です。',tip:'話を聞いたときのリアクションを大きくするだけで相手は「この人と話すの楽しい」と感じます。オーバーリアクションくらいがちょうど良いです。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'モテの本質として最も正しい考え方はどれ？',q:'モテの根本にあるものは何か？',opts:['清潔感とファッション','トーク力とユーモア','自信と自分を磨き続けること','お金と地位'],correct:2,why:'自信は外見・知識・体・経済力を磨くことで自然と身につきます。強いオスに惹かれるのは本能的なもの。自信がある人が放つ雰囲気は言葉より強く伝わります。',tip:'モテを目的にするより「自分を高め続けること」を目的にする方が長期的に魅力的な人間になれます。男磨きの継続が全ての土台です。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性に物でなく「褒め」をプレゼントする方法として正しいのはどれ？',q:'相手が最も喜ぶ褒め方はどれ？',opts:['外見（顔・スタイル）を具体的に褒める','センスや考え方など目に見えない内面を褒める','みんなに言えるような無難な言葉で褒める','比較で褒める（「他の子と違って」など）'],correct:1,why:'外見を褒めるのは誰でもできます。センス・気遣い・考え方など目に見えない「ノンバーバル」な部分を褒めることで「この人はちゃんと見てくれている」と感じさせられます。',tip:'「〇〇ちゃんって、話し方がすごく丁寧だよね」「気遣いが細かくて素敵だなと思って」など内面への気づきを伝えましょう。'},
+  {type:'date',typeLabel:'📅 デート',scene:'初対面でやりがちな「一発アウト」な印象はどれ？',q:'初対面で特に避けるべき印象はどれ？',opts:['少し生意気な印象','チャラい印象','真面目で優しそうな印象','クールで無口な印象'],correct:2,why:'「真面目で優しそう」という印象は後から崩すのが難しく、距離が縮まりにくい。チャラい→真面目は好印象ですが、真面目→チャラいは悪印象です。最初から少し余裕のある雰囲気を出す方が有利です。',tip:'最初の印象は「真面目すぎず、でも礼儀はある」くらいのバランスが理想です。少し余裕のある笑顔が効果的です。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'メッセージの語尾を疑問文で終わらせることについて正しいのはどれ？',q:'LINEやメッセージで最も効果的な文の終わらせ方は？',opts:['全て疑問文で終わらせて会話を続ける','断定口調でリードする','絵文字をつけて明るい雰囲気にする','長文で気持ちを丁寧に伝える'],correct:1,why:'「いつ空いてる？」「どこがいい？」などの疑問文だけでは相手に委ねすぎで弱い印象になります。「▲日の夜空けといて」という断定口調でリードする方が余裕と自信が伝わります。',tip:'デートの誘いは「〇日の夜どう？」より「〇日の夜空けといて」くらいの断定的な表現の方が相手は安心してついてきやすくなります。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'ナンパや話しかけることへの苦手意識を克服する方法として最も効果的なのは？',q:'話しかける慣れを作る最も実践的な方法は？',opts:['毎日鏡の前でトーク練習する','街中の店員やおじさんおばさんに積極的に話しかける慣れを作る','動画でナンパ師のトークを研究する','一人で妄想のシミュレーションをする'],correct:1,why:'実際に話しかける経験が最も効果的です。「もしこの人が女性だったら」とイメトレしながら日常で話しかけることで、適切な間合いや声の出し方が自然に身につきます。',tip:'コンビニ店員への一言・エレベーターでの挨拶など小さな「話しかける」体験を毎日積み重ねましょう。これが一番の実践練習になります。'},
+
+  // ===== 追加70問 =====
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性と話すとき、最初の話題として最も自然に警戒心を解くのはどれ？',q:'初対面で最も使いやすい話しかけ方は？',opts:['「一目惚れしました」と正直に伝える','「連絡先交換しませんか？」と単刀直入に聞く','「このあたりでおすすめのカフェ知りませんか？」と用件で話しかける','「暇ですか？」と聞く'],correct:2,why:'「用事がある自然な理由」で話しかけると警戒心が下がります。目的を最初に見せないことで会話のきっかけを自然に作れます。',tip:'最初から目的を出すと身構えられます。「ちょっと聞いていいですか？」と始めて、自然に会話に移行しましょう。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'会話の主導権を握るために最も効果的な方法は？',q:'女性との会話でリードするために大切なことは？',opts:['相手の話に全て同意する','話題を常に自分が提供してリードする','女性の話したいことだけを聞く','相手に全て決めてもらう'],correct:1,why:'会話のリードは「男が話題を提供し、女性に喋らせる」が基本。話題だけ振って後は話させてあげるのができる男の会話術です。',tip:'「最近〇〇って流行ってるじゃん、知ってる？」と振って後は相手に話させましょう。聞き上手な男が最もモテます。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'「いい人だけど…」と言われて振られた経験がある。この原因として最も正確なのは？',q:'「いい人なんだけど」と思われる男に足りないものは？',opts:['清潔感','お金','いざというとき守れる強さや余裕','会話力'],correct:2,why:'女性が「いい人なんだけど」と言うのは、安全すぎて刺激がない・いざというとき頼れない、という意味です。優しさは必要ですが、強さの中の優しさが求められます。',tip:'「優しい男」より「強くて時々優しい男」を目指しましょう。自分の意見を持ち、リードできる姿勢が重要です。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性のネガティブな意見や愚痴を聞いているとき、最も効果的な返し方は？',q:'相手のネガティブな発言への最善の対応は？',opts:['「そんなことないよ！」と否定して元気づける','「それは辛いね、でもこうすれば…」と解決策を出す','「わかるわかる、それって〇〇な感じだよね」と肯定して代弁する','「気にしすぎだよ」と軽く流す'],correct:2,why:'ネガティブな意見を肯定して感情を代弁すると、相手は「わかってもらえた」と感じます。解決策は求められていないことが多く、まず共感が先です。',tip:'「それは確かに嫌だよね」「そう感じるの当然だと思う」と気持ちを受け止めてから、必要なら提案に移りましょう。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デート中に相手が楽しんでいるか不安になってきた。最も良い対応は？',q:'デート中に相手の楽しさを引き出す最善の方法は？',opts:['「楽しい？」と直接確認する','自分自身が全力で楽しんでいる姿を見せる','相手の好みに全て合わせる','話題を増やして間を埋める'],correct:1,why:'自分が楽しめば相手も楽しくなります。「楽しい？」と確認するのは逆効果。人は楽しそうな人と一緒にいたいので、まず自分が楽しむことが最善策です。',tip:'「楽しい？」より「これ面白くない？笑」と自分が楽しんでいる状態を示す方が、相手も自然と楽しくなります。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性との会話でLINEが続かなくなってきた。最も効果的な対応は？',q:'LINEの返信が遅くなった・短くなったときの最善の対応は？',opts:['「返信遅いけど何かあった？」と聞く','毎日必ず連絡を送り続ける','少し間を空けて、面白い話題や「ちょっと聞いていい？」で再開する','長文で気持ちを伝える'],correct:2,why:'返信が減ったとき、追い続けると逆効果。少し間を空けてから新鮮な話題で再開する方が自然に関係をリセットできます。',tip:'「ちょっと聞いていい？」という一言は相手の気を引きやすい。「実は〇〇があって」と話題を作って送ると返信率が上がります。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'好きな女性の前で緊張してしまう。この問題への最善のアプローチは？',q:'好きな女性の前での緊張を和らげる最も根本的な解決策は？',opts:['緊張しないよう深呼吸する','「緊張してる」と正直に言う','場数を踏んで経験値を増やす','好きという気持ちを消す'],correct:2,why:'緊張は経験不足から来ます。好きな女性だけでなく、日常的にいろんな人と話す経験を積むことで、自然体で接せるようになります。',tip:'特定の一人に集中しすぎると緊張が増します。普段から色んな人に気軽に話しかける習慣が、好きな人への自然体を作ります。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性と初めてLINEを交換した。最初のメッセージとして最も良いのは？',q:'LINE交換直後の最初のメッセージで最も効果的なのは？',opts:['「よろしくお願いします！」とだけ送る','交換した直後に「さっき会えてよかった」と一言送る','「今何してるの？」とすぐ聞く','スタンプだけ送る'],correct:1,why:'交換直後に「会えてよかった」という感想を送ると、余韻を大切にしている印象を与えます。最初の一言が関係の始まりの温度を決めます。',tip:'「さっき楽しかった」「また話したいな」など、今の気持ちを素直に一言送ると関係がスムーズに続きます。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デートで食事の場所を決めるとき、最もスマートな決め方は？',q:'デートの場所・お店を決めるときの最善の方法は？',opts:['「どこでもいいよ」と相手に全て任せる','「何が食べたい？」と聞いてから決める','「〇〇か〇〇どっちが好き？」と二択で聞いてから自分で予約する','事前に調べて「ここ行こう」と自分で決める'],correct:3,why:'デートのリードは男がすることで安心感が生まれます。「どこでもいい」は決断を押し付けているのと同じ。事前に調べて提案する姿勢が最も頼もしく映ります。',tip:'「〇〇ってお店調べておいたけど行ってみない？」という一言で「この人はちゃんと準備してくれた」という好印象になります。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'女性から「友達として好き」と言われた。この状況の正しい解釈は？',q:'「友達として好き」という言葉の本当の意味として最も近いのは？',opts:['関係を大切にしたいから友人でいたい','異性として魅力を感じていない','まだ距離が縮まっていないだけ','脈ありのサイン'],correct:1,why:'「友達として好き」は基本的に異性としての関心がないことを丁寧に伝えた言葉です。この段階からの逆転は難しく、執着より新しい出会いに力を注ぐ方が賢明です。',tip:'「友達として好き」と言われたら引きずらず、「そっか、ありがとう」とさらっと受け取れる男の方が最終的にかっこよく見えます。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性が自分の趣味や好きなことを話しているとき、最も良いリアクションは？',q:'相手が好きなことを話しているときの最善の反応は？',opts:['「へー、そうなんだ」とシンプルに返す','「すごい！それってどういうこと？もっと教えて」と興味を示す','自分も同じ趣味があると話す','「それって楽しいの？」と確認する'],correct:1,why:'好きなことを話しているときに「もっと教えて」と言われると、相手は「この人は自分のことを知りたがっている」と感じ、一気に距離が縮まります。',tip:'相手の趣味に関する質問を深堀りしましょう。「それいつから好きなの？」「きっかけは？」と聞くと会話が自然に広がります。'},
+  {type:'date',typeLabel:'📅 デート',scene:'初デートで最も避けるべきことはどれ？',q:'初デートで絶対にやってはいけないことは？',opts:['奢ること','元カノや過去の話をすること','自分の話をすること','お酒を飲むこと'],correct:1,why:'初デートで元カノや過去の話は絶対NG。相手は「この人はまだ過去を引きずっているのか」「私と比べているのか」と感じます。過去より今・未来の話をしましょう。',tip:'過去の話は「昔は〇〇だったけど今は全然違う」くらいでとどめましょう。大切なのは「今のあなた」を見せることです。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'筋トレを始めようと思っているがモテとの関係が気になる。',q:'筋トレがモテに与える効果として最も正確なのは？',opts:['筋肉があれば無条件にモテる','体を鍛えることで自己肯定感と自信が上がり結果的にモテる','外見より内面が大事なので効果は少ない','モテには関係ない'],correct:1,why:'筋トレの最大の効果は「体の変化」より「自信と自己肯定感の向上」です。自信がある人から出るオーラが最もモテに直結します。',tip:'筋トレは「モテるため」より「自分が変わるため」という動機の方が続きます。継続した先に自信がつき、それがモテに繋がります。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性から「〇〇くんって彼女いるの？」と聞かれた。最もモテる返し方は？',q:'「彼女いるの？」と聞かれたときの最善の返し方は？',opts:['「いないよ、なんで？」と正直に答える','「どうだろうね〜」とはぐらかす','「なんで気になるの？笑」と逆に聞き返す','「いたらダメなの？」とちょっと意地悪に返す'],correct:2,why:'「なんで気になるの？」と逆に聞き返すと、相手が自分への関心を自覚するきっかけになります。素直に答えるより会話が面白くなります。',tip:'この質問は相手があなたに興味を持っているサイン。焦って答えず「なんで気になるの？笑」と返すと距離が縮まります。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デートの終わりに次のデートに繋げるための最善の方法は？',q:'デートの最後に次を約束するための最も効果的な方法は？',opts:['「また会いたい」とLINEで送る','帰り際に「次さ、〇〇行こうよ」と具体的に提案する','「楽しかったよ、ありがとう」と伝えるだけ','後日タイミングを見て誘う'],correct:1,why:'「また会いたい」より「次は〇〇行こう」と具体的に言う方がはるかに実現しやすい。余韻がある帰り際が最もOKをもらいやすいタイミングです。',tip:'「今日楽しかった、次は〇〇行きたいな」と帰り道に言えると、次のデートがほぼ確定します。LINEより対面で言う方が効果的です。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性と話すとき「相手に共感させる」ために最も大切なことは？',q:'女性に「わかるー！」と言わせるために最も有効な方法は？',opts:['面白い話をたくさんする','「〇〇って感じじゃない？」と相手が感じていることを先に言語化する','共通の趣味について話す','有名人の話題を出す'],correct:1,why:'相手が感じていることを先に言語化すると「そうそう！まさにそれ！」と共感が生まれます。相手が共感するのではなく、相手に共感させることが会話の主導権を握るコツです。',tip:'「〇〇って時ってなんか〇〇な感じしない？」と先に感情を言葉にするクセをつけましょう。相手が「わかる！」と言いやすくなります。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'告白して断られた後の最もスマートな対応は？',q:'告白して断られたときに最もかっこいい対応は？',opts:['「友達に戻れる？」とお願いする','「そっか、正直に言ってくれてありがとう」とさらっと受け入れる','「なんで？」と理由を聞く','しばらく距離を置いて関係を断つ'],correct:1,why:'「ありがとう」とさらっと受け入れられる男は、断った後も「やっぱりいい人だな」と印象が上がることがあります。執着・追及は最も逆効果です。',tip:'断られた後こそ本当のかっこよさが出ます。「そっか、教えてくれてありがとう」の一言で終われる男が最終的にモテます。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性に「〇〇くんってどんな子が好きなの？」と聞かれた。',q:'「好きなタイプは？」と聞かれたときの最もモテる返し方は？',opts:['理想のタイプを詳しく説明する','「うーん、〇〇ちゃんみたいな子かな」と目の前の相手を挙げる','「タイプとかあんまりないんだよね」とかわす','「なんで気になるの？」と逆に聞く'],correct:1,why:'「〇〇ちゃんみたいな子」と目の前の相手を挙げると、相手は特別感を感じます。ただし唐突すぎると嘘っぽいので、会話の流れで自然に言えると効果的です。',tip:'「強いて言えば〇〇ちゃんみたいな感じかな」と少し照れながら言うのが自然です。真剣になりすぎずさらっと言うのがポイントです。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デート中に相手が「お腹すいた」「疲れた」と言ってきた。最善の対応は？',q:'デート中に相手の体調や要望への最善の対応は？',opts:['「もう少し我慢して」と続けることを促す','「じゃあどうしたい？」と聞いて相手に決めさせる','「じゃあここ入ろう」とすぐ行動して連れて行く','「ごめんね」と謝る'],correct:2,why:'女性の「疲れた」「お腹すいた」にはすぐ行動して解決してあげることが大切。「どうしたい？」と聞くのは決断を押し付けています。瞬時に動ける男が頼もしく見えます。',tip:'「お腹すいた」と言われたら迷わず「じゃあここ入ろう」とリードしましょう。相手に考えさせない、即決できる男が好まれます。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性が話しているとき、相槌の打ち方で気をつけることは？',q:'会話中の相槌として最も効果的なのは？',opts:['「うん、うん」とひたすら頷く','「へー」「なるほど」を繰り返す','「それって〇〇ってこと？」と内容に反応しながら相槌を打つ','黙って聞く'],correct:2,why:'内容に反応した相槌は「ちゃんと聞いている」を証明します。「うん、うん」の繰り返しは聞いていない印象になりやすい。',tip:'「それって〇〇ってこと？」「そこが大変だったんだね」と内容に反応する相槌を意識しましょう。相手の話のキーワードを使うと効果的です。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'外見に自信がない。顔がよくないとモテないと感じている。',q:'外見に自信がない男がまず取り組むべきことは？',opts:['整形を検討する','清潔感・眉毛・髪型・姿勢の4つを整える','ブランド品を揃える','顔より中身を磨く'],correct:1,why:'清潔感・眉毛・髪型・姿勢はお金をかけずに大きく印象を変えられます。顔の造形より「整っている」印象の方がモテに直結します。',tip:'まず眉毛を整えて、髪型を美容師に相談して、背筋を伸ばす。この3つだけで印象が大幅に変わります。清潔感が全ての土台です。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性が何かを愚痴っているとき、その愚痴の対象（友人・職場など）について最善の対応は？',q:'女性の愚痴を聞くときに最も避けるべき行動は？',opts:['「それは辛かったね」と共感する','「相手も悪くないんじゃない？」と客観的に伝える','「そうなんだ、それで？」と続きを促す','「それはひどいね！」と一緒に怒る'],correct:1,why:'愚痴を言っているときに「相手も悪くない」と言うと「この人は私の味方じゃない」と感じます。まずは共感が最優先で、分析は求められてからにしましょう。',tip:'愚痴を聞くときは「そうだよね、それは嫌だよ」と味方でいることを示すのが最優先です。正論は後回しにしましょう。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デートで奢るかどうか迷っている。最も良い判断基準は？',q:'デートでの支払いについての最も賢い考え方は？',opts:['常に全額奢る','必ず割り勘にする','相手の出方を見て自然に払う','「割り勘でいい？」と聞いてから決める'],correct:2,why:'「常に全額奢る」は当然と思われるリスク、「割り勘」は印象が下がることも。相手が財布を出したら「今日は俺が払うよ」とさらっと払う自然さが最もスマートです。',tip:'相手が財布を出すそぶりを見せたときに「いいよいいよ」とさらっと払えると、大人の余裕が伝わります。後で「次は出して」と言えば平等感も出ます。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'「嫌われたくない」という気持ちが強くて行動できない。',q:'「嫌われたくない」という感情がモテに与える影響として正しいのは？',opts:['相手を大切にしている証拠なのでモテる','行動を制限し、結果的に魅力を下げる','慎重さとして好印象を与える','関係ないので気にしなくて良い'],correct:1,why:'「嫌われたくない」が強いと誘えない・自分の意見を言えない・媚びるという行動につながります。これが「優しいけど…」と思われる原因です。',tip:'「嫌われても大丈夫」という余裕が自信に見えます。全員に好かれようとするより、自分らしく接することが長期的にモテにつながります。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性との会話でボディタッチをするタイミングについて正しいのは？',q:'ボディタッチの最も効果的なタイミングは？',opts:['最初から積極的に触れる','笑ったとき・驚いたときなど感情が動いた瞬間に自然に触れる','会話が盛り上がってきたら触れる','絶対に触れない'],correct:1,why:'感情が動いた瞬間（笑い・驚き）は心が開いているタイミングです。「面白！」と笑った瞬間に肩や腕に触れると自然で不快感がありません。',tip:'「それ面白すぎ！」と笑いながら肩に触れる、が最も自然なボディタッチです。感情の波に乗せることで違和感がなくなります。'},
+  {type:'date',typeLabel:'📅 デート',scene:'初デートの場所として最も適しているのはどれ？',q:'初デートの場所として最も成功しやすいのは？',opts:['映画館','家でNetflix','昼間のカフェ＋夜のバー（2軒設定）','テーマパーク'],correct:2,why:'昼間のカフェで会話を楽しみ、夜は少し特別な場所に移動する「2軒設定」が最も距離が縮まりやすいです。映画は会話できず、テーマパークは疲れます。',tip:'「まずお茶して、その後気が向いたら夜ご飯も」という緩い設定が断られにくく、実際には夜まで続きやすいです。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'自分をどう「見せるか」より自分を「磨くこと」の重要性について。',q:'長期的にモテ続けるために最も重要なことは？',opts:['テクニックを磨く','見せ方・演出を工夫する','知力・体力・経済力・コミュ力を継続的に高める','SNSのフォロワーを増やす'],correct:2,why:'テクニックは一時的ですが、自分自身の価値を高めることは永続します。知力・体力・経済力・コミュ力の4つを磨き続ける男は年齢を重ねるほど魅力が増します。',tip:'「モテたいから磨く」より「自分が成長したいから磨く」という動機の方が継続できます。結果としてモテがついてきます。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性から「〇〇って面白いよね」と言われた。',q:'「面白いね」と言われたときの最もモテる返し方は？',opts:['「そんなことないよ笑」と謙遜する','「ありがとう、〇〇ちゃんも面白いよ」と返す','「どんなところが？」と聞く','照れてうつむく'],correct:1,why:'褒められたら謙遜せず堂々と受け取り、すぐ褒め返す。これが一流の返しです。「どんなところが？」は自意識過剰に見えることがあります。',tip:'褒められた瞬間に「ありがとう、〇〇ちゃんも〜だよ」と間髪入れずに返せると印象が良くなります。テンポが大事です。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デート中に女性が「疲れた」とは言わないが、歩くペースが落ちてきた。',q:'この状況でモテる行動は？',opts:['「疲れた？」と確認する','気づかないふりをして歩き続ける','「ちょっと休もう」と自分から提案する','「もう少し歩こう」と促す'],correct:2,why:'言葉にしていない相手の状態に気づいて先に提案できる男は、観察力と気遣いが伝わり非常に魅力的です。気づいてあげることが最上の気遣いです。',tip:'デート中は相手の歩くペース・表情・視線を観察しましょう。言葉より行動でサインを出している場合が多いです。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性との会話で「間」が生まれたとき、焦って話を続けてしまう。',q:'会話中の「間」への正しい向き合い方は？',opts:['すぐ次の話題を出す','「ちょっと黙っちゃった笑」と笑いに変える','黙って微笑む余裕を持つ','「何か話して」と促す'],correct:2,why:'間を恐れない余裕が自信の表れです。黙って微笑めると「この人は焦らない」という印象になり、むしろ好感度が上がります。',tip:'沈黙に耐えられる男は少ない。「間があっても大丈夫」という余裕そのものが魅力になります。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'女性にたくさん連絡を送っているのにそっけなくなってきた。',q:'連絡の頻度について正しい考え方は？',opts:['好きなら毎日連絡すべき','相手の返信ペースに合わせてやや少なめに送る','連絡は多いほど気持ちが伝わる','しばらく全く連絡しない'],correct:1,why:'連絡が多すぎると「重い」「追われている」と感じさせます。相手の返信ペースより少し少なめにすることで「もっと連絡ほしい」と思わせられます。',tip:'「返信が来たら返す、来なかったら待つ」くらいのスタンスが丁度いいです。追いかけすぎると価値が下がります。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'初対面の女性の容姿を褒めたが、反応が薄かった。なぜ？',q:'初対面で「かわいい」と外見を褒めることの問題点は？',opts:['褒め方が下手だった','外見への褒め言葉は慣れている・軽く見られやすい','タイミングが悪かった','もっと具体的に褒めるべきだった'],correct:1,why:'かわいい女性は毎日のように外見を褒められています。外見の褒めは差別化にならず、むしろ「またこういうやつか」と思われやすい。センスや気遣い・話し方など内面を褒める方が刺さります。',tip:'「かわいい」より「話し方がすごく聞きやすい」「センスいいよね」など誰も言わない観点で褒めると強く印象に残ります。'},
+  {type:'date',typeLabel:'📅 デート',scene:'女性が「どこでもいい」と言ってきた。最善の対応は？',q:'「どこでもいい」と言われたときの最もスマートな対応は？',opts:['「じゃあどこがいい？」とさらに聞く','「だよな〜」と流す','「じゃあここにしよう」と自分で決める','「何でもいいってことはないでしょ笑」とつっこむ'],correct:2,why:'「どこでもいい」は「決めてほしい」というサインです。ここで自分で決められる男がリードできる男。迷わず提案できる決断力が魅力になります。',tip:'「どこでもいい」と言われたら「じゃあここ行こう」と即決しましょう。決断力と余裕が一瞬で伝わります。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'モテる男の「塩対応」について正しく理解しているのはどれ？',q:'「塩対応がモテる」の正しい意味は？',opts:['冷たく無視することでモテる','ときに断ったり自分の意見を持つことで価値が上がる','常にクールな態度をとることでミステリアスに見える','媚びないために優しくしない'],correct:1,why:'塩対応とは「冷たくする」ことではなく「全てに従わない・自分の軸を持つ」ことです。全て従う男より、たまに断れる男の方が「この人を繋ぎ止めたい」と思わせられます。',tip:'「たまに断れる」「自分の意見を持てる」ことが塩対応の本質です。冷たくするのではなく、自分を持つことが大切です。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性が「最近仕事がつらい」と打ち明けてきた。',q:'この状況での最善の返し方は？',opts:['「転職したら？」とアドバイスする','「わかる、俺も最近しんどくて」と自分の話にする','「それは辛いね、何があったの？」と続きを聞く','「大丈夫だよ！」と励ます'],correct:2,why:'打ち明けてきたということは「聞いてほしい」サインです。アドバイスや励ましより「続きを聞く」姿勢が最も求められています。',tip:'「何があったの？」と続きを促すことが最も大切。解決策は求められてから。まず全部吐き出させてあげましょう。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デートの帰り際に「また会いたい」とLINEで送った。既読がついたが返信がない。',q:'この状況での最善の対応は？',opts:['「返信ください」と催促する','追いLINEを送る','数日待ってから別の話題で連絡する','もう諦める'],correct:2,why:'既読無視に焦って追いLINEをすると「重い」と思われます。数日空けて全く関係ない話題で連絡すると自然にリセットできます。',tip:'「返信ないな…」と焦るほど追いかけたくなりますが、それが最も逆効果。「余裕のある男」を演出するために待てることが大事です。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'グループの場で好きな女性と仲良くなりたい。最善のアプローチは？',q:'グループの場で特定の女性に好印象を与えるための最善の方法は？',opts:['その女性だけに話しかけ続ける','グループ全体を盛り上げながら、その女性にだけ少し特別な視線や反応を送る','こっそり連絡先を渡す','グループの場では何もしない'],correct:1,why:'グループ全体を盛り上げると「この人はムードメーカー」という好印象になります。その上でターゲットの女性にだけ特別な反応を見せることで、他より一段上の関係になれます。',tip:'グループでは「みんなに楽しそうにしながら、その子の発言だけ特別に拾う」を意識しましょう。差別化が自然に生まれます。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'「高身長・高収入・高学歴」がないとモテないと思っている。',q:'外的スペックとモテの関係について最も正確なのは？',opts:['スペックがなければモテない','スペックは有利だが、自信と魅力の方が重要','スペックがあれば絶対モテる','スペックは全く関係ない'],correct:1,why:'スペックは加点要素ですが、自信のない高スペックより自信のある低スペックの方がモテることは多くあります。スペックより「一緒にいて楽しい」かどうかが実際には重視されます。',tip:'スペックを言い訳にせず「今の自分で最大限魅力的になる」ことを目指しましょう。自信は行動の積み重ねから生まれます。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性との会話で自分の弱みや失敗談を話すことについて正しいのはどれ？',q:'自己開示（弱み・失敗談）の効果として正しいのは？',opts:['弱みを見せると格下に思われる','適度な自己開示は親近感と信頼感を生む','失敗談は絶対に話さない方がいい','自己開示は多いほど良い'],correct:1,why:'適度な自己開示（特に笑える失敗談）は「この人は正直で親しみやすい」という印象を作ります。完璧すぎる人より人間味のある人の方が近づきやすいです。',tip:'「実はこういう失敗したことあって笑」と笑いに変えられる失敗談は最高の自己開示ツールです。自虐すぎず、笑える範囲で話しましょう。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デート後に感想のLINEを送るとき、最も良い内容は？',q:'デート後に送るLINEとして最もモテる内容は？',opts:['「楽しかった！また行こうね」と長文で送る','「今日ありがとう、〇〇が特に楽しかった」と具体的に送る','スタンプだけ送る','何も送らない'],correct:1,why:'「特に〇〇が楽しかった」という具体的な感想は「ちゃんと覚えている」「よく見ていた」という印象を与えます。漠然とした「楽しかった」より一段上の好印象になります。',tip:'「今日の〇〇の話、すごく面白かった」と会話の一コマを引用すると「ちゃんと聞いていた」が伝わって相手が嬉しくなります。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'合コンや初対面の場で最初に好印象を作る方法として正しいのはどれ？',q:'初対面の場での最初の印象作りで最も大切なことは？',opts:['面白い話を準備していく','高いブランド品を身につける','笑顔・声の大きさ・姿勢の3つを整える','相手の話を全て覚える'],correct:2,why:'最初の印象は「中身より見た目と雰囲気」で決まります。笑顔・ハキハキした声・背筋が伸びた姿勢の3つで「自信がある人」という印象になります。',tip:'合コン前は背筋チェック・笑顔練習・声のトーン確認の3つだけで十分。中身より第一印象の雰囲気が最初の数分を決めます。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性から「〇〇くんって優しいよね」と言われた。',q:'「優しいね」と言われたときの最もモテる返し方は？',opts:['「そんなことないよ」と謙遜する','「〇〇ちゃんが話しやすいからだよ」と相手のせいにして返す','「ありがとう、〇〇ちゃんも気遣いできるよね」と褒め返す','黙って微笑む'],correct:1,why:'「〇〇ちゃんが話しやすいから」と返すと、相手が「この人を引き出しているのは自分だ」と感じ特別感が生まれます。褒め返しより一段洗練された返し方です。',tip:'「〇〇ちゃんと話してると自然体でいられる」という返しも非常に効果的です。相手のおかげで自分が良くなれる、という表現が刺さります。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デート中に女性が他の男性の話（友人・元カレなど）をしてきた。',q:'デート中に他の男性の話が出たときの最善の対応は？',opts:['嫉妬を見せる','「その人より俺の方がいいでしょ笑」と比較する','「へー、どんな人？」と興味なさそうに流す','「その話より今日の話しよう」と話題を変える'],correct:2,why:'嫉妬を見せると「重い」、比較すると「必死」に見えます。興味なさそうに流せると余裕と自信が伝わり、かえって魅力的に映ります。',tip:'他の男の話には動じないことが大切。「へー」と軽く流して「それより〇〇の話して」と自分のペースに戻しましょう。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'「また連絡するね」と言ったのに連絡していない。どう対応する？',q:'「また連絡するね」と言って間が空いてしまったとき、最善の再連絡の仕方は？',opts:['「連絡遅くてごめん」と謝罪から始める','謝罪なしに「そういえば〇〇なんだけど」と自然に話しかける','「覚えてる？」と聞いてから始める','もう連絡しない'],correct:1,why:'謝罪から入ると「間が空いたこと」を強調してしまいます。謝罪なしに自然な話題で連絡することで、間が空いたことを気にしていない余裕を演出できます。',tip:'「そういえば〇〇ってこの前言ってたけど、どうなった？」と相手の話を覚えていた形で連絡すると自然に再開できます。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'女性に「また遊ぼうね」と言われたがその後連絡がない。',q:'「また遊ぼうね」という言葉の正しい解釈は？',opts:['近いうちに誘ってくれる','社交辞令の可能性が高い','脈ありサイン','もう少し待てば連絡が来る'],correct:1,why:'「また遊ぼうね」は日本語の定番の社交辞令です。本当に会いたければ「いつにする？」と日程を出してきます。この言葉を待って受け身でいると何も起きません。',tip:'「また遊ぼう」と言われたら受け身にならず「じゃあ来週どう？」と自分から具体的に動きましょう。受け身の男は選ばれません。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性の話に乗り切れないとき（知らない話題・ついていけないとき）の対応は？',q:'知らない話題が出たときの最もモテる対応は？',opts:['知ったかぶりをする','「それ知らないけど教えて！」と素直に聞く','話題を変える','「詳しくないんだよね」と軽く流す'],correct:1,why:'知らないことを素直に「教えて！」と言える男は、相手に「教えてあげたい・喜ばせたい」という気持ちを引き出します。知ったかぶりより遥かに好印象です。',tip:'「それ知らないんだよね、どういうの？」と素直に聞くと相手がのびのびと話せます。知識量より「聞く姿勢」の方が会話力として重要です。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デートで話が盛り上がりすぎて終電を逃した。最善の対応は？',q:'デート中に予想外に長く一緒にいることになったときの最善の対応は？',opts:['「やばい終電！」と焦る','「ごめん、気をつけなくて」と謝る','「なんか名残惜しいね、もう少し話そう」と自然に延長する','タクシーを黙って呼ぶ'],correct:2,why:'終電を逃しても焦らず「名残惜しいね」と言えると、むしろ「それだけ楽しかった」という演出になります。ピンチをチャンスに変える余裕が魅力的です。',tip:'「時間経つの早いね」「まだ話したかったな」という言葉は相手も同じ気持ちになりやすい言葉です。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'自分磨きを続けるモチベーションが下がってきた。',q:'男磨きを継続するための最も強いモチベーションの源は？',opts:['モテたいという気持ち','彼女を作るという目標','自分が変わっていく実感と自己成長','他の男に勝ちたいという競争心'],correct:2,why:'「モテたい」という外的動機は短期間で燃え尽きます。「自分が変わっていく実感」という内的動機の方が長続きし、結果的に最もモテにつながります。',tip:'1ヶ月前の自分と比べて「ここが変わった」を意識しましょう。他人との比較より自分の成長を追うことが継続の秘訣です。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性が「最近いいことないな〜」とつぶやいた。',q:'この一言への最もモテる返し方は？',opts:['「何があったの？」と聞く','「俺がいいこと作ってあげるよ」と返す','「大変だったんだね」と共感する','「気持ち切り替えようよ！」と明るく促す'],correct:1,why:'「俺がいいこと作ってあげるよ」は少し大げさに聞こえますが、ユーモアと余裕を含んだ一言で、明るく前向きな印象を与えます。状況を引き受けてリードする姿勢が魅力的です。',tip:'「俺がいいこと作ってあげるよ、今週末空いてる？」とそのままデートの提案につなげると完璧な流れになります。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デート中に女性がスマホを見ていることが多い。',q:'デート中に相手がスマホばかり見ているときの最善の対応は？',opts:['「スマホばかり見てるね」と指摘する','無視して自分も話し続ける','「あ、大事な連絡？」とさりげなく確認する','話題を変えて引きつける'],correct:3,why:'スマホを見るのは会話が退屈になってきたサインかもしれません。指摘や無視より、新しい話題で引きつけることが最も建設的です。',tip:'スマホを見始めたら「そういえばさ、」と新しい話題を投入しましょう。相手の興味が引ける話題（相手の好きなこと・驚く情報）が効果的です。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'女性に「重い」と感じさせてしまうことが多い。原因として最も正確なのは？',q:'「重い」と思われる男に共通する特徴として最も正確なのは？',opts:['連絡が多すぎる','好きという気持ちが強い','相手の都合より自分の気持ちを優先している','見た目が清潔感がない'],correct:2,why:'「重い」の本質は「自分の気持ち・欲求を相手のペースより優先してしまうこと」です。連絡が多いこと自体より、相手の状況を考えない行動が「重さ」を生みます。',tip:'「相手は今どう感じているか？」を先に考える習慣をつけましょう。相手のペースを読める男は「重い」とは感じられません。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性に「今度ご飯行こう」と言われたが、その後具体的な話が進まない。',q:'「今度ご飯行こう」と言われた後の最善の行動は？',opts:['相手から誘ってくるのを待つ','「いつにする？」とすぐ自分から動く','「本当に行く気ある？笑」と確認する','「楽しみにしてる」とだけ返す'],correct:1,why:'「今度行こう」は相手が誘っているサイン。ここで受け身になると「社交辞令だったのかな」と流れてしまいます。「いつにする？」とすぐ具体化する男がリードできる男です。',tip:'「いつにする？来週か再来週ならどっちが空いてる？」と二択で聞くと話がすぐ前に進みます。機会を逃さないことが大切です。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デートで女性が「寒い」と言ってきた。',q:'「寒い」と言われたときの最もモテる対応は？',opts:['「そうだね」と共感する','「じゃあ早く帰ろう」と促す','上着を貸す・温かい場所に移動するなど即座に行動する','「もう少しだから」と我慢させる'],correct:2,why:'「寒い」という一言に即座に行動できる男は気遣いと決断力の両方が伝わります。口で共感するより行動で示す方が何倍も効果的です。',tip:'「寒い」と言われたら考える前に動く。上着を脱いで渡す・「あっちの店入ろう」と即決する。この瞬発力がかっこよさに直結します。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性との会話で笑いを生み出すために最も効果的な方法は？',q:'女性を笑わせるために最も重要なことは？',opts:['面白いジョークをたくさん覚える','相手の話をいじる・つっこむことで笑いを作る','自虐ネタを使う','有名人のモノマネをする'],correct:1,why:'女性を笑わせる最強の方法は相手の話に対してつっこむこと。「え、それってどういうこと笑」「それはひどい笑」と相手の話に乗っかる笑いが最も自然で盛り上がります。',tip:'笑いは「自分から出す」より「相手の話に乗っかる」方が自然です。相手の発言を拾って返す「つっこみ力」を磨きましょう。'},
+  {type:'mind',typeLabel:'🧠 マインド',scene:'毎日少しずつ自分を磨いているが結果が出ない焦りがある。',q:'自己磨きで結果が出ない時期の正しい向き合い方は？',opts:['もっと速く変わる方法に切り替える','結果が出ない時期こそ継続が最も大切と理解する','一旦全てやめてリセットする','もっと多くのことに同時に取り組む'],correct:1,why:'自己磨きの結果は「急に出る」もの。変化は少しずつ積み重なって、ある日突然表れます。結果が出ない時期は実は最も成長している時期です。',tip:'「3ヶ月前の自分より少しでも良くなっている」ことを確認しましょう。小さな変化に気づける人が長期的に最も成長します。'},
+  {type:'talk',typeLabel:'💬 会話術',scene:'女性との会話で「価値観が合う」と感じさせるための最善の方法は？',q:'「この人とは価値観が合う」と感じさせるために最も効果的なことは？',opts:['同じ趣味を持つ','相手の価値観を全肯定する','相手の感じ方・考え方に「わかる」と共感を示す','自分の価値観を詳しく説明する'],correct:2,why:'「わかる、それって〇〇な感じだよね」と共感を示すことで価値観が合う印象を作れます。同じ趣味より「同じように感じる」ことの方が深い共鳴を生みます。',tip:'相手の気持ちや考えに「それわかるわ〜」「俺も同じこと思う」と言える瞬間を増やしましょう。感情レベルでの共感が最も強い絆を作ります。'},
+  {type:'date',typeLabel:'📅 デート',scene:'デートで行ったお店がイマイチだった。最善の対応は？',q:'デートで予想より良くないお店だったときのモテる対応は？',opts:['「ごめん、失敗した」と謝り続ける','「ここ微妙だったね笑、次はもっといいとこ行こう」と笑いに変える','黙って耐える','「ここはそういうもんだよ」とフォローする'],correct:1,why:'失敗を笑いに変えられる余裕が魅力的です。「次はもっといいとこ行こう」という一言で次のデートの約束にもつながります。',tip:'「ここ微妙だったね笑、リベンジしなきゃ」と言えると失敗がむしろ次への布石になります。ミスを笑える男は一緒にいて安心感があります。'},
+];
+
+
+// ===================================================
+// ビジネス用語 問題データ (100問)
+// ===================================================
+const BIZWORD_Q = [
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「UI」',q:'UI（User Interface）の正しい意味はどれ？',opts:['ユーザーが製品・サービスを使う体験全体','ユーザーが実際に触れる画面・ボタン・見た目の部分','サイトの読み込み速度','ユーザーの個人情報'],correct:1,why:'UIは「見た目・操作部分」、UXは「体験全体」。ボタンのデザインや色・レイアウトがUIに当たります。',tip:'UIとUXはセットで覚えましょう。UIが良くてもUXが悪い（使いにくい）サイトは多く存在します。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「UX」',q:'UX（User Experience）の正しい意味はどれ？',opts:['ウェブサイトの見た目・デザインのこと','ユーザーがサービスや製品を使う際の体験全体','サイトの読み込み速度','ユーザーの個人情報'],correct:1,why:'UIが「見た目」、UXが「体験全体」。見た目が良くても使いにくければUXは悪い。ユーザーの感情・使いやすさ全体を指します。',tip:'UXはデザインだけでなく、情報設計・導線・読み込み速度なども含みます。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ファーストビュー」',q:'ファーストビューの正しい意味はどれ？',opts:['サイトの最初のページ（トップページ）','ページを開いたときにスクロールせずに見える画面の範囲','スマホで見たときの表示','サイトのロゴやヘッダー部分'],correct:1,why:'ファーストビューはスクロールなしで見える最初の画面。ここで離脱するかどうかが決まるため最重要エリアです。',tip:'ファーストビューに何を置くかでCVR（コンバージョン率）が大きく変わります。キャッチコピーとCTAが特に重要。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「レスポンシブデザイン」',q:'レスポンシブデザインの正しい意味はどれ？',opts:['画面のサイズに合わせて自動でレイアウトが変わるデザイン手法','ページの読み込みを速くする技術','ユーザーの行動に反応するアニメーション','色使いが鮮やかなデザインスタイル'],correct:0,why:'スマホ・タブレット・PCなど様々な画面サイズに対応するため、1つのHTMLで自動的にレイアウトを変える手法です。',tip:'現在はモバイルファーストが主流。スマホから先にデザインを考えることが重要です。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ワイヤーフレーム」',q:'ワイヤーフレームの正しい意味はどれ？',opts:['完成したWebサイトの設計図','サイトの骨格・構成を示した簡略な図（色・デザイン未適用）','サイトのコード一覧','ユーザーの動線を示した図'],correct:1,why:'ワイヤーフレームはデザインの骨格図。色やビジュアルなしで、どこに何を配置するかを決める設計段階のアウトプットです。',tip:'ワイヤーフレーム→デザインカンプ→コーディングの順で制作が進みます。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「カンプ」',q:'デザインカンプの正しい意味はどれ？',opts:['完成予想図となる高品質なデザインモックアップ','サイトのコード','ユーザーインタビューの結果','サイトマップのこと'],correct:0,why:'カンプ（Comprehensive Layout）はデザインの完成予想図。コーディング前に実際の見た目を確認するためのデザインデータです。',tip:'FigmaやAdobe XDなどのツールでカンプを作るのが一般的です。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「CTA」',q:'CTA（Call To Action）の正しい意味はどれ？',opts:['サイトのアクセス数','ユーザーに次の行動を促すボタンや要素（「今すぐ申し込む」など）','サイトの読み込み速度指標','コンテンツの更新頻度'],correct:1,why:'CTAはユーザーに具体的な行動を促す要素。「無料で試す」「資料をダウンロード」などのボタンが代表例です。',tip:'CTAの文言・色・配置でCVRが大きく変わります。「送信する」より「無料で始める」の方が効果的なことが多いです。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ヒートマップ」',q:'ヒートマップの正しい意味はどれ？',opts:['サイトの人気コンテンツランキング','ユーザーがどこをクリック・スクロールしたかを色で視覚化したツール','サーバーの温度管理ツール','広告のクリック率を示すグラフ'],correct:1,why:'ヒートマップはユーザーの行動を熱感知のように色で可視化するツール。どこが注目されているか・どこで離脱するかがわかります。',tip:'Hotjarなどのツールでヒートマップを取得し、デザイン改善に活かすのが一般的です。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「アクセシビリティ」',q:'Webアクセシビリティの正しい意味はどれ？',opts:['サイトの読み込み速度','高齢者・障がい者を含む全てのユーザーが使えるよう設計すること','スマホからアクセスできること','サイトのセキュリティ対策'],correct:1,why:'アクセシビリティは「誰でも使えること」。色覚多様性・スクリーンリーダー対応・キーボード操作対応などが含まれます。',tip:'altテキスト（画像の説明文）の設定や色のコントラスト比の確認がアクセシビリティ改善の基本です。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「グリッドシステム」',q:'グリッドシステムの正しい意味はどれ？',opts:['サイトのデータ管理の仕組み','縦・横の規則的な格子状のガイドラインに沿ってレイアウトを組む手法','画像を格子状に並べるデザイン','ページの読み込みを最適化する技術'],correct:1,why:'グリッドシステムは整理されたレイアウトを作るための設計手法。12カラムグリッドが広く使われています。',tip:'グリッドに沿ったデザインは整然として読みやすく、コーディングもしやすくなります。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ホワイトスペース」',q:'ホワイトスペース（余白）の正しい意味はどれ？',opts:['背景を白くすること','要素と要素の間の空きスペース・余白','未使用のディスク容量','白いバナー広告'],correct:1,why:'ホワイトスペースはデザインの「間」。適切な余白は読みやすさを上げ、高品質な印象を与えます。',tip:'余白は「無駄なスペース」ではなく「読みやすさと品質を作るデザイン要素」です。詰め込みすぎはNG。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「モックアップ」',q:'モックアップの正しい意味はどれ？',opts:['完成前のサンプルや試作品・見本','プログラムのバグの種類','ユーザーのフィードバック','サイトの運用マニュアル'],correct:0,why:'モックアップは実際の完成品に近い形で作られたサンプル。デザインの確認・プレゼンに使います。',tip:'ワイヤーフレーム（骨格）→モックアップ（見た目）→プロトタイプ（動く試作）の順で精度が上がります。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「プロトタイプ」',q:'プロトタイプの正しい意味はどれ？',opts:['実際に動作する試作品・デモ版','完成したデザインデータ','サイトのバックアップ','ユーザーテストの結果'],correct:0,why:'プロトタイプは実際にクリックや操作ができる試作品。FigmaなどでもプロトタイプモードでUIの動きを確認できます。',tip:'プロトタイプでユーザーテストを行い、問題を早期発見することで開発コストを削減できます。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ブレイクポイント」',q:'ブレイクポイントの正しい意味はどれ？',opts:['サイトがクラッシュする原因','レスポンシブデザインでレイアウトが切り替わる画面幅の基準値','デザインの修正が必要な箇所','コンテンツの分岐点'],correct:1,why:'ブレイクポイントはスマホ・タブレット・PCなどで表示が切り替わる画面幅の数値（例：768px、1024pxなど）です。',tip:'一般的なブレイクポイントはSP：〜767px、タブレット：768〜1023px、PC：1024px〜が目安です。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「スラッグ」',q:'URLのスラッグの正しい意味はどれ？',opts:['URLの末尾にある、ページを識別する文字列','サイトのタイトル','ページの読み込み速度','画像のファイル名'],correct:0,why:'スラッグはURLの「/about」「/blog/post-1」の部分。SEOにも影響するため、わかりやすい英単語を使うのが基本です。',tip:'スラッグは日本語より英語が推奨。「/サービス」より「/service」の方がSEO・シェア・管理の面で有利です。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ペルソナ」',q:'Webデザインにおけるペルソナの正しい意味はどれ？',opts:['デザイナーの役割','サービスの理想的なターゲットユーザーを具体的に設定した架空の人物像','ウェブサイトのキャラクター','競合分析の手法'],correct:1,why:'ペルソナはターゲットユーザーを「27歳・女性・東京在住・OL」のように具体化した架空の人物。デザイン・コンテンツの方向性を統一するために使います。',tip:'ペルソナが明確だと「この人が見たらどう感じるか？」という視点でデザインを判断できます。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「カラーパレット」',q:'カラーパレットの正しい意味はどれ？',opts:['写真の編集ツール','デザインで使用する色の組み合わせセット','ページの背景色','フォントの色一覧'],correct:1,why:'カラーパレットはプロジェクトで使う色を事前に決めたセット。メインカラー・サブカラー・アクセントカラーで構成されることが多い。',tip:'統一されたカラーパレットを使うと、ブランドの一貫性が生まれ、プロっぽいデザインになります。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「インフォグラフィック」',q:'インフォグラフィックの正しい意味はどれ？',opts:['サイトのアクセス解析レポート','情報やデータを視覚的にわかりやすく表現した図・グラフィック','動画コンテンツ','写真と文章を組み合わせたコンテンツ'],correct:1,why:'インフォグラフィックは複雑な情報やデータをグラフ・イラスト・アイコンで視覚化したもの。SNSでの拡散力が高いです。',tip:'インフォグラフィックはSEO効果も高く、他サイトからの被リンク（バックリンク）を獲得しやすいコンテンツ形式です。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ナビゲーション」',q:'Webサイトのナビゲーションの正しい意味はどれ？',opts:['サイトのアクセス解析','ユーザーがサイト内を移動するためのメニュー・リンク構造','サイトの更新履歴','ページの読み込み速度'],correct:1,why:'ナビゲーションはユーザーがサイト内を迷わず移動できるためのメニュー。グローバルナビ・サイドナビ・フッターナビなどがあります。',tip:'ナビゲーションはUXの核心。3クリック以内に必要な情報にたどり着けることが理想的とされています。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「パンくずリスト」',q:'パンくずリストの正しい意味はどれ？',opts:['エラーログの一覧','現在のページの階層構造を示すナビゲーション（ホーム＞カテゴリ＞記事）','サイトマップのこと','フッターのリンク一覧'],correct:1,why:'パンくずリストは「ホーム > ブログ > 記事タイトル」のように現在地を示すナビゲーション。SEOにも効果があります。',tip:'パンくずリストはユーザーの迷子防止とGoogleのクローリング効率化の両方に役立ちます。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「タイポグラフィ」',q:'タイポグラフィの正しい意味はどれ？',opts:['サイトの文字数','文字の配置・書体・サイズ・行間などを用いたデザイン技術','フォントのダウンロード','テキストのSEO最適化'],correct:1,why:'タイポグラフィは文字を使ったデザインの技術全般。読みやすさ・美しさ・ブランド感は全てタイポグラフィで決まります。',tip:'行間（line-height）は本文で1.6〜1.8が読みやすい目安。文字サイズは最低16pxが推奨されています。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「アンカーリンク」',q:'アンカーリンクの正しい意味はどれ？',opts:['外部サイトへのリンク','同一ページ内の特定の位置に移動するリンク','画像に貼られたリンク','新しいタブで開くリンク'],correct:1,why:'アンカーリンクはページ内の「#見出し」などに飛ぶリンク。LPの目次や「このページのトップへ戻る」ボタンに使われます。',tip:'長いLPや記事には目次アンカーリンクを設置すると離脱率が下がります。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「スティッキーヘッダー」',q:'スティッキーヘッダーの正しい意味はどれ？',opts:['重いヘッダー画像','スクロールしても画面上部に固定され続けるヘッダー','ヘッダーのアニメーション','スマホ用のハンバーガーメニュー'],correct:1,why:'スティッキー（sticky）は「くっついた」という意味。スクロールしてもヘッダーが追従して表示され続ける実装です。',tip:'スティッキーヘッダーはナビゲーションへのアクセス性を高めますが、画面を狭くするデメリットもあります。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ハンバーガーメニュー」',q:'ハンバーガーメニューの正しい意味はどれ？',opts:['飲食店のWebサイト専用メニュー','三本線のアイコンをクリックするとナビゲーションが展開されるUI','フッターのメニュー一覧','縦に並んだサイドメニュー'],correct:1,why:'三本線（≡）がハンバーガーに見えることからこの名前。スマホサイトでよく使われるナビゲーションパターンです。',tip:'ハンバーガーメニューはスペース節約になりますが、メニューの存在に気づかれにくいデメリットもあります。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ベクター画像」',q:'ベクター画像の正しい意味はどれ？',opts:['写真などのピクセルで構成された画像','数式・座標で描かれた拡大しても劣化しない画像（SVGなど）','アニメーション画像','背景が透明な画像'],correct:1,why:'ベクターは数学的な式で描かれるため、どんなサイズに拡大しても劣化しません。ロゴ・アイコンなどに最適です。',tip:'ロゴはSVG（ベクター）で用意しましょう。PNGと違い、Retinaディスプレイでも鮮明に表示されます。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ラスター画像」',q:'ラスター画像（ビットマップ画像）の正しい意味はどれ？',opts:['数式で描かれた拡大しても劣化しない画像','ピクセルの集合で構成された画像（JPG・PNGなど）','動画ファイルの一種','アイコン専用の画像形式'],correct:1,why:'JPG・PNG・GIFなどがラスター画像。ピクセルで構成されるため、拡大すると劣化（ぼやける）します。',tip:'写真はラスター（JPG・WebP）、ロゴ・アイコンはベクター（SVG）が使い分けの基本です。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「WebP」',q:'WebPの正しい意味はどれ？',opts:['Webページの設計手法','Googleが開発した高圧縮・高品質な次世代画像フォーマット','Webサイトのプログラミング言語','Web会議ツールの一種'],correct:1,why:'WebPはJPGより約30%ファイルサイズが小さく、同等の画質を保てます。ページ速度改善に効果的な画像フォーマットです。',tip:'Core Web VitalsのLCP改善にはWebPへの変換が効果的。ほぼ全ての主要ブラウザで対応済みです。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「コンポーネント」',q:'Webデザインにおけるコンポーネントの正しい意味はどれ？',opts:['パソコンのハードウェア部品','再利用可能なUIの部品（ボタン・カード・ナビなど）','ページのコード全体','プラグインのこと'],correct:1,why:'コンポーネントはボタン・カード・フォームなどの再利用可能なUI部品。一度作れば複数箇所で使い回せます。',tip:'Figmaのコンポーネント機能を使うと、デザイン変更が全箇所に一括反映されて効率的です。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「フォントウェイト」',q:'フォントウェイトの正しい意味はどれ？',opts:['フォントの大きさ','フォントの太さ（細い〜太い）','フォントの種類','フォントの色'],correct:1,why:'フォントウェイトは文字の太さのこと。100〜900の数値やthin・regular・boldなどで指定します。',tip:'見出しはbold（700）、本文はregular（400）が基本。太さでメリハリをつけると読みやすいデザインになります。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「スケルトンスクリーン」',q:'スケルトンスクリーンの正しい意味はどれ？',opts:['透明なデザインスタイル','コンテンツ読み込み中に表示されるグレーの枠（仮のプレースホルダー）','骨格を見せるワイヤーフレーム','ダーク系のデザインテーマ'],correct:1,why:'スケルトンスクリーンはコンテンツが読み込まれる前にグレーの枠を表示する手法。ただのロード画面より体感速度が速く感じられます。',tip:'YouTubeやTwitterのロード時に表示されるグレーの枠がスケルトンスクリーンです。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「Core Web Vitals」',q:'Core Web Vitalsの正しい意味はどれ？',opts:['Googleが提供するWebデザインテンプレート','Googleが定めたWebページの品質（速度・安定性・操作性）を測る指標群','サイトのセキュリティ評価基準','ウェブサイトのアクセス解析ツール'],correct:1,why:'Core Web VitalsはLCP（読み込み速度）・FID（操作応答性）・CLS（レイアウトの安定性）の3指標でSEOにも影響します。',tip:'PageSpeed Insightsで自分のサイトのCore Web Vitalsを確認できます。特にLCPは2.5秒以下が目標です。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ランディングページ（LP）」',q:'ランディングページ（LP）の正しい意味はどれ？',opts:['サイトの全ページの総称','広告などから来たユーザーを特定の行動（申込・購入）に誘導するための1枚ページ','エラーページのこと','サイトのホームページ'],correct:1,why:'LPは1ページで完結し、ナビゲーションを省いて1つの行動（CVR）に集中させるページです。広告との組み合わせで使います。',tip:'LPの離脱率を下げるにはファーストビューの改善が最重要。キャッチコピー・ベネフィット・CTAの3点セットを最上部に配置しましょう。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「ダークモード対応」',q:'Webサイトのダークモード対応の正しい意味はどれ？',opts:['夜間にのみ表示されるデザイン','OSの設定に応じて自動で背景が暗い配色に切り替わるデザイン対応','黒い背景のデザインテーマ','エラー時に表示される暗い画面'],correct:1,why:'ダークモード対応はCSSのprefers-color-schemeメディアクエリを使って実装。ユーザーのOS設定に合わせて自動切替します。',tip:'ダークモードでは色のコントラスト比の再確認が必要です。ライトモードで問題ない色でもダークで見えにくくなることがあります。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「マイクロコピー」',q:'マイクロコピーの正しい意味はどれ？',opts:['小さいフォントのコピーライト表記','ボタン・エラーメッセージ・プレースホルダーなどUIの中の短い文言','モバイル専用のキャッチコピー','画像のaltテキスト'],correct:1,why:'マイクロコピーはUIの中の小さな文言。「送信する」vs「今すぐ無料で始める」のように、たった数文字でCVRが大きく変わります。',tip:'フォームの「送信する」を「〇〇を受け取る」に変えるだけでCVRが上がることがあります。マイクロコピーは軽視禁物です。'},
+  {type:'web',typeLabel:'🖥️ Web・デザイン',scene:'Webデザインの基本用語「フォールドライン」',q:'フォールドライン（Above the fold）の正しい意味はどれ？',opts:['ページの折り返し地点・スクロールしないと見えない境界線','フォントの基準線','レイアウトの中心線','コードの区切り'],correct:0,why:'フォールドライン（折り目線）はスクロールせずに見える範囲の境界。重要な情報はこのライン上に配置するのが基本です。',tip:'「Above the fold」が最重要エリア。CTAや主要メッセージはここに配置しましょう。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「ROI」',q:'ROI（Return On Investment）の正しい意味はどれ？',opts:['月間の売上合計','投資に対してどれだけのリターンが得られたかを示す指標','広告のクリック数','従業員の満足度'],correct:1,why:'ROI＝（利益 ÷ 投資額）× 100。ROIが高いほど少ない投資で多くのリターンを得ています。',tip:'マーケ施策の効果測定に必須の指標。「この施策のROIは？」と常に考える習慣が重要です。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「CVR」',q:'CVR（Conversion Rate）の正しい意味はどれ？',opts:['サイトの訪問者数','訪問者のうち目標行動（購入・申込など）を達成した割合','広告のクリック率','コンテンツの閲覧数'],correct:1,why:'CVR＝コンバージョン数 ÷ セッション数 × 100。ECサイトなら購入率、LPなら申込率がCVRです。',tip:'CVRを1%改善するだけで売上が大きく変わります。LPのデザイン・コピー・CTAを改善しましょう。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「KPI」',q:'KPI（Key Performance Indicator）の正しい意味はどれ？',opts:['会社の最終目標','目標達成度を測るための重要な中間指標','競合他社の分析結果','予算計画書'],correct:1,why:'KPIは目標（KGI）を達成するための中間指標。「月間PV数」「CVR」「新規顧客獲得数」などが代表例です。',tip:'KGI（最終目標）→KPI（中間指標）の順で設定。KPIが達成されるとKGIに近づく設計が重要です。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「LTV」',q:'LTV（Life Time Value）の正しい意味はどれ？',opts:['サイトの滞在時間','一人の顧客が生涯を通じてもたらす総利益・総売上','広告の掲載期間','コンテンツの寿命'],correct:1,why:'LTVは顧客1人の生涯価値。LTVを上げるには解約率低下・リピート促進・アップセルが有効です。',tip:'新規獲得コスト（CAC）よりLTVが高ければビジネスが成立します。LTV ÷ CAC ≥ 3が健全な目安とされています。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「CPC」',q:'CPC（Cost Per Click）の正しい意味はどれ？',opts:['1コンバージョンあたりの費用','広告が1回クリックされるごとにかかる費用','1000回表示あたりの費用','月間広告費の合計'],correct:1,why:'CPC＝広告費 ÷ クリック数。Google広告やSNS広告でよく使われる指標です。',tip:'CPCが高くてもCVRが高ければ問題ない場合も。CPA（1件あたりのコスト）も合わせて評価しましょう。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「CPM」',q:'CPM（Cost Per Mille）の正しい意味はどれ？',opts:['1クリックあたりの費用','1コンバージョンあたりの費用','広告1,000回表示あたりの費用','月間の広告表示回数'],correct:2,why:'CPM＝広告費 ÷ 表示回数 × 1000。認知獲得目的の広告ではCPMでコスト評価することが多いです。',tip:'クリック率（CTR）が低い場合、CPMが安くてもCPCは高くなります。目的に合わせた指標で評価しましょう。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「CTR」',q:'CTR（Click Through Rate）の正しい意味はどれ？',opts:['コンテンツの離脱率','広告やリンクが表示された回数のうちクリックされた割合','購入完了率','メールの開封率'],correct:1,why:'CTR＝クリック数 ÷ インプレッション数 × 100。バナー広告・Google検索広告・メールなどで使われます。',tip:'CTRが低い場合はクリエイティブ（画像・コピー）の改善が必要。A/Bテストで比較するのが基本です。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「CPA」',q:'CPA（Cost Per Acquisition）の正しい意味はどれ？',opts:['1クリックあたりの費用','1,000回表示あたりの費用','1件のコンバージョン（購入・申込）を獲得するためにかかった費用','月間広告費の合計'],correct:2,why:'CPA＝広告費 ÷ コンバージョン数。CPAが目標値以下なら広告は黒字、以上なら赤字と判断できます。',tip:'CPAの目標値は商品の利益率から逆算して設定します。LTVも考慮することが重要です。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「ROAS」',q:'ROAS（Return On Ad Spend）の正しい意味はどれ？',opts:['広告費の総額','広告費に対して何倍の売上を生んだかを示す指標','広告のクリック率','広告の表示回数'],correct:1,why:'ROAS＝広告経由の売上 ÷ 広告費 × 100（%）。ROAS 300%なら1万円の広告費で3万円の売上を意味します。',tip:'ROIは利益ベース、ROASは売上ベースで測ります。利益率が低い商材はROASを高く設定する必要があります。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「SEO」',q:'SEO（Search Engine Optimization）の正しい意味はどれ？',opts:['SNS広告の最適化','検索エンジンで上位表示されるようにサイトを改善する施策','サイトのセキュリティ対策','メールマーケティングの手法'],correct:1,why:'SEOは検索エンジン最適化。GoogleなどでユーザーがキーワードをY検索したとき、上位に表示されるよう対策します。',tip:'SEOはコンテンツ・技術・被リンクの3軸で評価されます。良質なコンテンツが全ての基本です。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「オーガニック流入」',q:'オーガニック流入の正しい意味はどれ？',opts:['SNSからの流入','広告費を使わず検索エンジンから自然に訪れたユーザー','メールからの流入','直接URLを入力してきたユーザー'],correct:1,why:'オーガニック（有機的）流入は広告なしで検索結果から来たユーザー。SEOで増やせる最もコスト効率の良い流入源です。',tip:'オーガニック流入を増やすにはSEOが重要。一度上位表示されれば広告費ゼロで継続的に流入します。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「ファネル」',q:'マーケティングファネルの正しい意味はどれ？',opts:['漏斗型のグラフ','認知→興味→検討→購入という顧客の購買プロセスを示したモデル','広告の配信設定','コンテンツの分類方法'],correct:1,why:'ファネル（漏斗）は上から認知・興味・比較・購入と絞り込まれていく顧客の行動モデル。施策をファネルのどの段階に当てるか設計します。',tip:'TOFu（Top of Funnel：認知）→MOFu（Middle：検討）→BOFu（Bottom：購入）と施策を分けて考えましょう。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「リターゲティング」',q:'リターゲティング広告の正しい意味はどれ？',opts:['新規ユーザーへの広告配信','一度サイトを訪れたユーザーに再度表示される広告','特定の地域にだけ配信する広告','メールで送る広告'],correct:1,why:'リターゲティングは一度サイトを訪問したユーザーに追いかけるように表示される広告。購入検討中のユーザーへのリーチに効果的です。',tip:'リターゲティングは認知ではなく「迷っているユーザーの背中を押す」施策。CVRが高い傾向があります。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「A/Bテスト」',q:'A/Bテストの正しい意味はどれ？',opts:['2つの商品の売上比較','2つのバージョン（A案・B案）を同時に配信し効果を比較する手法','広告とSEOの効果比較','AとBの2人のデザイナーが作ったデザインの比較'],correct:1,why:'A/Bテストはバナー・LP・メールなど2パターンをランダムに表示し、どちらがCVR・CTRが高いかを測定する手法です。',tip:'A/Bテストは感覚でなくデータで改善する最も基本的な手法。変数は一度に一つだけ変えることが原則です。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「インプレッション」',q:'インプレッションの正しい意味はどれ？',opts:['クリックされた回数','広告やコンテンツが表示された回数','購入された回数','シェアされた回数'],correct:1,why:'インプレッション（imp）は広告・投稿が画面に表示された回数。クリックされなくても表示されればカウントされます。',tip:'インプレッションが多くてもCTRが低い場合はクリエイティブに問題あり。まず「見てもらえているか」を確認しましょう。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「バウンス率」',q:'バウンス率（直帰率）の正しい意味はどれ？',opts:['サイトからの離脱率（全ページ共通）','1ページだけ見てサイトを離れたユーザーの割合','広告のキャンセル率','メールの開封率'],correct:1,why:'バウンス率（直帰率）は1ページだけ見て帰ったユーザーの割合。高いほど「期待と内容が合っていない」サインです。',tip:'直帰率が高いページはファーストビューの改善が必要。ユーザーが期待していた情報をすぐ見せることが重要です。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「コンテンツマーケティング」',q:'コンテンツマーケティングの正しい意味はどれ？',opts:['広告を大量に出すマーケティング手法','有益なコンテンツを提供して見込み客を集め育てるマーケティング','商品のパッケージデザインを改善すること','イベントを開催して集客すること'],correct:1,why:'コンテンツマーケティングはブログ・動画・SNSなどで価値ある情報を発信し、潜在顧客を引き寄せて購買につなげる手法です。',tip:'広告は止めたら消えますが、良質なコンテンツは資産になります。長期投資として取り組む視点が重要です。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「エンゲージメント率」',q:'SNSにおけるエンゲージメント率の正しい意味はどれ？',opts:['投稿の表示回数','フォロワー数の増加率','いいね・コメント・シェアなどのリアクション数をインプレッションで割った割合','広告のクリック率'],correct:2,why:'エンゲージメント率は投稿への反応率。インプレッションが多くてもエンゲージメント率が低ければコンテンツが刺さっていないサインです。',tip:'フォロワー数よりエンゲージメント率が重要。少数精鋭のフォロワーとの深いつながりを目指しましょう。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「バイラルマーケティング」',q:'バイラルマーケティングの正しい意味はどれ？',opts:['TVCMを使った大規模広告','口コミ・シェアで爆発的に情報が広がることを狙ったマーケティング','インフルエンサーへの広告依頼','メールで大量送信する広告'],correct:1,why:'バイラル（viral）はウイルスのように広がるという意味。SNSでシェアされやすいコンテンツを作り、口コミで認知を広げます。',tip:'バイラルは狙えるものではなく「結果としてなるもの」。感情を動かす・役に立つ・驚きがあるコンテンツが広がりやすいです。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「オウンドメディア」',q:'オウンドメディアの正しい意味はどれ？',opts:['テレビや雑誌などのマスメディア','自社が所有・運営するブログ・サイト・SNSアカウントなどのメディア','インフルエンサーのSNS','有料広告枠'],correct:1,why:'オウンド（owned）は「所有している」。自社ブログ・公式サイト・メルマガなどがオウンドメディアです。長期的な資産になります。',tip:'トリプルメディア：オウンド（自社）・アーンド（口コミ）・ペイド（広告）の3つを組み合わせるのがマーケの基本です。'},
+  {type:'mkt',typeLabel:'📊 マーケティング',scene:'マーケティング用語「グロースハック」',q:'グロースハックの正しい意味はどれ？',opts:['不正な方法で成長すること','データ分析と実験を繰り返して最速で成長する手法・考え方','ハッカーがサービスを攻撃すること','急激な値下げで顧客を獲得すること'],correct:1,why:'グロースハックはFacebook・Dropbox・Airbnbが採用した成長手法。A/Bテスト・ファネル分析・ユーザーインタビューを繰り返します。',tip:'DropboxのリファラルプログラムはグロースハックÃ代表例。「友達を招待すると容量増加」で爆発的に拡大しました。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「PDCA」',q:'PDCAサイクルの正しい意味はどれ？',opts:['Plan（計画）→Do（実行）→Check（評価）→Action（改善）の繰り返し','Product・Design・Cost・Analysisの頭文字','プレゼン・デモ・コンセプト・アクションの流れ','価格・デザイン・コンテンツ・広告の4要素'],correct:0,why:'PDCAは業務改善の基本サイクル。計画→実行→振り返り→改善を繰り返すことで継続的に成果を上げます。',tip:'PDCAは「Check（振り返り）」が最も重要で最も省略されがちです。数値で評価する習慣をつけましょう。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「MVP」',q:'ビジネスにおけるMVP（Minimum Viable Product）の正しい意味はどれ？',opts:['最も優れた製品','最小限の機能で市場に出せる製品（試作品）','最高価値の提案','最も売れている製品'],correct:1,why:'MVPは「最低限動く製品」。完成を待たずに市場に出して反応を見ることで、無駄な開発を防ぎます。スタートアップで多用される概念。',tip:'完璧を目指してリリースを遅らせるより、MVPで早く出してフィードバックをもらう方が結果的に良い製品ができます。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「バリュープロポジション」',q:'バリュープロポジションの正しい意味はどれ？',opts:['商品の価格設定','顧客に提供できる独自の価値・なぜ自社を選ぶべきかの理由','従業員への福利厚生','投資家への提案書'],correct:1,why:'バリュープロポジションは「なぜうちを選ぶのか」という独自価値の定義。競合と差別化されていることが重要です。',tip:'「誰の・どんな問題を・どう解決するか」を明確にしたのがバリュープロポジション。ブレがあると全ての施策がズレます。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「ピボット」',q:'スタートアップにおけるピボットの正しい意味はどれ？',opts:['資金調達のこと','事業の方向性を大きく転換すること','新しいメンバーを採用すること','オフィスを移転すること'],correct:1,why:'ピボット（pivot）はバスケのターンが語源。市場の反応を見て事業モデル・ターゲット・製品を大きく変えることです。',tip:'YouTubeは元々動画出会い系サービス、Instagramは位置情報ゲームアプリでした。ピボットで成功した代表例です。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「SaaS」',q:'SaaS（Software as a Service）の正しい意味はどれ？',opts:['パッケージソフトウェアの販売','インターネット経由でソフトウェアをサブスクで提供するビジネスモデル','ハードウェアのレンタルサービス','セキュリティソフトのこと'],correct:1,why:'SaaSはGoogle Workspace・Slack・Notionなどのようにブラウザからサブスクで使うソフトウェアサービスです。',tip:'SaaS事業のKPIはMRR（月次定期収益）・チャーン率・LTV。一度契約してもらえば安定収益が続くのが特徴です。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「アジャイル」',q:'アジャイルの正しい意味はどれ？',opts:['大規模な計画を立てて一気に実行する手法','小さく素早く繰り返す開発・業務改善の手法','会議を減らす働き方','外部に業務委託すること'],correct:1,why:'アジャイルは「素早い」という意味。短いサイクルで開発・改善を繰り返すことで、変化に柔軟に対応します。',tip:'アジャイルの反対はウォーターフォール（大きな計画を順番に実行）。現代のWeb開発ではアジャイルが主流です。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「ステークホルダー」',q:'ステークホルダーの正しい意味はどれ？',opts:['会社の株主のみ','企業の活動に利害関係を持つ人・組織（顧客・従業員・株主・地域社会など）','プロジェクトのチームメンバー','取引先企業'],correct:1,why:'ステークホルダーは「利害関係者」の総称。顧客・従業員・株主・取引先・地域住民など全員が含まれます。',tip:'CSR（企業の社会的責任）やESGはステークホルダー全体を考慮した経営の概念です。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「クロスセル」',q:'クロスセルの正しい意味はどれ？',opts:['競合製品を比較して販売すること','購入者に関連商品・追加商品を勧めること','高額な上位商品を勧めること','複数チャンネルで販売すること'],correct:1,why:'クロスセルは「ハンバーガーを買った人にポテトも勧める」のような関連商品の提案。LTVを上げる有効な手法です。',tip:'アップセルは「より高い商品を勧める」、クロスセルは「関連商品を追加で勧める」の違いを覚えましょう。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「アップセル」',q:'アップセルの正しい意味はどれ？',opts:['関連商品を追加で勧めること','現在の商品より上位・高額なものを勧めること','過去の購入者に再購入を促すこと','無料プランから有料プランへの移行を促すこと'],correct:1,why:'アップセルは「スタンダードプランを買う人にプレミアムプランを勧める」などの上位版提案。単価アップに効果的です。',tip:'アップセルの成功率は新規獲得より高い。既存顧客への提案は重要な売上向上施策です。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「チャーン率」',q:'チャーン率（解約率）の正しい意味はどれ？',opts:['新規顧客の獲得率','一定期間内に解約・離脱した顧客の割合','顧客満足度の指標','売上の成長率'],correct:1,why:'チャーン率はSaaSや会員制ビジネスで特に重要。チャーン率5%でも10年後には半分以下の顧客になります。',tip:'バケツに水を入れても穴が開いていれば溜まりません。新規獲得と同時にチャーン率の低下が最重要課題です。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「スケール」',q:'ビジネスにおける「スケールする」の正しい意味はどれ？',opts:['規模を縮小すること','コストを比例させずに売上・事業規模を拡大できること','スケジュールを延長すること','デザインのサイズを変えること'],correct:1,why:'スケールは「拡大再生産できる状態」。人やコストを増やさずに売上が増える仕組みを作ることがスケールの本質です。',tip:'SaaSやプラットフォームビジネスはスケールしやすい代表例。手作業が多いビジネスはスケールしにくいです。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「ボトルネック」',q:'ボトルネックの正しい意味はどれ？',opts:['予算が足りない状況','全体の流れの中で最も遅く・弱い部分（全体の速度を制限する箇所）','意見の対立が起きている部分','コストが最もかかっている部分'],correct:1,why:'ボトルネック（瓶の首）は全体の処理速度を制限している箇所。ここを改善すると全体のパフォーマンスが上がります。',tip:'TOC（制約理論）では「ボトルネックを見つけて集中して改善する」ことが最も効率的な改善方法とされています。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「オンボーディング」',q:'オンボーディングの正しい意味はどれ？',opts:['新しいオフィスへの移転','新入社員や新規顧客がスムーズに使い始められるよう支援するプロセス','製品のアップデート','海外展開のこと'],correct:1,why:'オンボーディングは「船に乗せる」が語源。新しい環境（製品・職場）に素早く慣れてもらうための支援プロセスです。',tip:'SaaSの解約の多くは「使い方がわからなかった」から。オンボーディングを充実させるとチャーン率が下がります。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「アジェンダ」',q:'アジェンダの正しい意味はどれ？',opts:['プロジェクトの最終目標','会議や打ち合わせの議題・進行表','業務の優先順位リスト','提案書のこと'],correct:1,why:'アジェンダは会議で話し合う議題・順序をまとめたリスト。事前共有することで会議の質と効率が大幅に上がります。',tip:'アジェンダなしの会議は目的地なしのドライブと同じ。必ず事前に「今日決めること」を明示しましょう。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「コンセンサス」',q:'コンセンサスの正しい意味はどれ？',opts:['上司の承認','関係者全員の合意・同意','多数決による決定','専門家の意見'],correct:1,why:'コンセンサスは全員が納得した状態での合意。多数決と違い、反対意見も聞いた上で全員が受け入れた状態です。',tip:'「コンセンサスを得る」は全員に賛成してもらうことが必須ではなく「全員が受け入れられる」状態を目指すことです。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「PMF」',q:'PMF（Product Market Fit）の正しい意味はどれ？',opts:['製品の最終完成状態','製品が市場のニーズにぴったりはまった状態','プロジェクト管理の手法','マーケティング施策の一種'],correct:1,why:'PMFは「市場が求めているものと製品が合致している状態」。PMF前にスケールしようとするのは最も危険な失敗パターンです。',tip:'PMFの確認方法：「この製品が使えなくなったら非常に困る」と回答するユーザーが40%以上なら達成の目安とされています。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「NPS」',q:'NPS（Net Promoter Score）の正しい意味はどれ？',opts:['月間の新規顧客数','顧客がサービスを他者に勧めたいかを0〜10で測る顧客ロイヤルティ指標','従業員満足度調査の結果','SNSのフォロワー増加数'],correct:1,why:'NPSは「友人・知人にこのサービスをすすめますか？」の回答で測定。推奨者の割合から批判者の割合を引いた数値です。',tip:'NPS 50以上が優秀とされています。Appleは70以上。NPSが高いと口コミで顧客が増えます。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「KGI」',q:'KGI（Key Goal Indicator）の正しい意味はどれ？',opts:['日々の業務の進捗指標','事業の最終目標を数値化したもの（売上・利益など）','競合との比較指標','顧客満足度の指標'],correct:1,why:'KGIは「最終的にどこを目指すか」という数値目標。KPIはKGI達成のための中間指標です。',tip:'KGIから逆算してKPIを設定するのが正しい順序。「KGIが売上1億円なら、CVRとアクセス数のKPIはいくつ？」と考えます。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「CAC」',q:'CAC（Customer Acquisition Cost）の正しい意味はどれ？',opts:['顧客1人のLTV','新規顧客1人を獲得するためにかかったコスト','月間の広告費合計','顧客満足度スコア'],correct:1,why:'CAC＝マーケ費用＋営業費用 ÷ 新規顧客数。LTV ÷ CAC ≥ 3が健全なビジネスの目安とされています。',tip:'CACが高くても、LTVが十分高ければビジネスは成立します。どちらか一方だけで評価しないことが重要です。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「PLG」',q:'PLG（Product-Led Growth）の正しい意味はどれ？',opts:['広告主導での成長戦略','製品そのものが成長エンジンとなる戦略（Freemiumなど）','PR活動中心の成長戦略','パートナー企業経由の成長戦略'],correct:1,why:'PLGはSlack・Notion・Figmaのように、製品を使ってもらうことが最大の営業・マーケティングになる戦略です。',tip:'「使ってみたら良かったから広めた」がPLGの理想形。製品品質が成長速度を決めます。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「フリーミアム」',q:'フリーミアムの正しい意味はどれ？',opts:['無料でサービスを提供し続けるモデル','基本機能は無料で提供し、高度な機能を有料にするビジネスモデル','期間限定で無料にするキャンペーン','フリーランサー向けのプレミアムサービス'],correct:1,why:'フリーミアムはFree＋Premiumの造語。Dropbox・Spotify・Notionが代表例。無料ユーザーを育てて有料転換させるモデルです。',tip:'フリーミアムの有料転換率は平均2〜5%。無料ユーザーが多い＝マーケティングコストが低いのがメリットです。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「SWOT分析」',q:'SWOT分析の正しい意味はどれ？',opts:['売上・費用・利益・損失の4指標分析','強み・弱み・機会・脅威の4軸で事業を分析するフレームワーク','顧客・競合・市場の3C分析','製品・価格・流通・販促の4P分析'],correct:1,why:'SWOT＝Strengths（強み）・Weaknesses（弱み）・Opportunities（機会）・Threats（脅威）。内部・外部環境を整理する基本フレームです。',tip:'SWOTは分析だけでなく「SOクロス（強みで機会を活かす）」「STクロス（強みで脅威を回避）」など戦略立案まで活用しましょう。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「3C分析」',q:'3C分析の正しい意味はどれ？',opts:['顧客（Customer）・競合（Competitor）・自社（Company）の3軸で市場を分析するフレームワーク','コスト・クオリティ・スピードの3要素分析','チャンネル・コンテンツ・コミュニティの戦略分析','生産・販売・管理の3機能分析'],correct:0,why:'3C分析は市場参入や戦略立案の基本フレーム。顧客ニーズ・競合の強み・自社の強みを整理して戦略を導きます。',tip:'3C分析は「顧客から始める」のが正しい順序。顧客ニーズを起点に、競合・自社を分析しましょう。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「ペインポイント」',q:'ペインポイントの正しい意味はどれ？',opts:['商品の弱み','顧客が感じている不満・困りごと・解決したい課題','競合との価格差','サービスの利用停止理由'],correct:1,why:'ペイン（pain）は「痛み」。顧客のペインポイントを見つけてそれを解決することがビジネスの基本です。',tip:'ペインポイントを深掘りするには顧客インタビューが最も効果的。「なぜ困っているの？」を5回繰り返すと本質が見えます。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「シナジー」',q:'シナジー効果の正しい意味はどれ？',opts:['競合との差別化','2つ以上の要素が組み合わさることで単独以上の効果が生まれること','コスト削減の効果','社員の士気向上'],correct:1,why:'シナジー（synergy）は「1＋1が3以上になる」相乗効果。M&Aの文脈でよく使われます。',tip:'「このM&Aでシナジーが生まれる」と言われても、実現しないことも多い。シナジーは意図的に設計しないと生まれません。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「リテンション」',q:'ビジネスにおけるリテンションの正しい意味はどれ？',opts:['新規顧客の獲得','既存顧客・従業員を維持・引き留めること','製品の品質保証','データの保管'],correct:1,why:'リテンション（retention）は「維持・保持」という意味。顧客リテンション＝解約させないこと、人材リテンション＝離職させないことを指します。',tip:'新規顧客獲得コストは既存顧客維持コストの5倍とされています。リテンションへの投資はROIが高い施策です。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「エコシステム」',q:'ビジネスエコシステムの正しい意味はどれ？',opts:['環境に配慮したビジネス','企業・パートナー・顧客・競合などが相互依存して共存するビジネス生態系','社内の組織文化','サプライチェーンのこと'],correct:1,why:'ビジネスエコシステムはApple AppStoreのように、複数のプレイヤーが相互に依存しながら価値を生む生態系です。',tip:'プラットフォームビジネスはエコシステムを構築することで、参加者が増えるほど価値が高まる「ネットワーク効果」が生まれます。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「マイルストーン」',q:'プロジェクトにおけるマイルストーンの正しい意味はどれ？',opts:['プロジェクトのゴール','プロジェクトの途中にある重要な節目・達成目標','タスクの締め切り','チームメンバーの担当分け'],correct:1,why:'マイルストーン（里程標）はプロジェクトの進捗を確認するための中間ゴール。「3月末にβ版リリース」などが例です。',tip:'マイルストーンを設定することで進捗が見えやすくなり、遅延の早期発見ができます。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「ブルーオーシャン戦略」',q:'ブルーオーシャン戦略の正しい意味はどれ？',opts:['競合が少ない未開拓市場を創造して競争なしに成長する戦略','海運・物流業界の戦略','競合に真っ向から挑む戦略','低コスト戦略のこと'],correct:0,why:'ブルーオーシャン（青い海）は競争のない市場。レッドオーシャン（赤い海）は競争が激しく血で赤く染まった市場の対義語です。',tip:'Wiiや任天堂DSはゲームの定義を変えることでブルーオーシャンを創り出した代表例です。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「DX（デジタルトランスフォーメーション）」',q:'DX（デジタルトランスフォーメーション）の正しい意味はどれ？',opts:['業務をデジタルツールに置き換えること','デジタル技術を活用してビジネスモデル・組織・文化を根本から変革すること','ウェブサイトを新しくすること','AIを導入すること'],correct:1,why:'DXは単なるIT化ではなく、デジタルを使って「事業の在り方・競争優位・価値提供」を根本から変える変革です。',tip:'「紙をPDFにする」はDXではなくIT化。「データを活用して新しいビジネスモデルを作る」がDXの本質です。'},
+  {type:'biz',typeLabel:'💡 経営・ビジネス',scene:'ビジネス用語「イノベーションのジレンマ」',q:'イノベーションのジレンマの正しい意味はどれ？',opts:['新製品の開発が難しいこと','優良企業が既存事業を守ることで破壊的新技術に対応できず市場を失う現象','資金不足で革新できないこと','技術の進歩が速すぎてついていけないこと'],correct:1,why:'コダック（フィルム）・ブロックバスター（レンタルビデオ）などが典型例。既存の成功が新技術への対応を遅らせる皮肉な現象です。',tip:'既存ビジネスで成功しているほどイノベーションのジレンマに陥りやすい。常に自社を「破壊する側」の視点を持つことが重要です。'},
+];
+
+// ===================================================
+// マーケティング4P 問題データ (100問)
+// ===================================================
+const FOURP_Q = [
+  {type:'product',typeLabel:'📦 Product',scene:'新しいタスク管理アプリを開発中。市場にはNotion・Todoistなど数百の競合が存在する。CMOとしてProduct戦略を選ぶとしたら？',q:'最も効果的な差別化戦略はどれか？',opts:['全機能搭載の「全部入り」アプリにする','AIで優先度を自動提案する特定機能に特化する','UIをとにかく美しくして見た目で勝負する','競合の半額で提供してシェアを取る'],correct:1,why:'過密市場で「全部入り」を目指すのは最も危険な戦略です。機能が増えるほど開発コストが膨らみ、ユーザーにとっては「何でもできるが何も特化していない」曖昧な製品になります。「AIで優先度を自動提案する」という明確なバリュープロポジションがあれば、「タスク管理に迷っている人」というターゲットに刺さりやすく、口コミも広がりやすい。Notion・Todoistも最初は機能を絞っていました。UIの美しさは差別化の理由にはなりにくく（真似されやすい）、価格競争は体力消耗戦になるため、特に初期フェーズでは禁物です。',tip:'「誰の・どんな痛みを・どう解決するか」を1行で言えない製品は市場に刺さりません。まずニッチに特化し、後から拡張するのが定石です。',words:[{term:'バリュープロポジション',desc:'「なぜ自社を選ぶのか」という独自の価値を定義したもの。「誰の・どんな問題を・どう解決するか」を明確にした言葉。'},{term:'ニッチ戦略',desc:'特定の小さな市場・顧客層に絞り込んで深く対応する戦略。競合が少なく、ファンを作りやすい。'}]},
+  {type:'product',typeLabel:'📦 Product',scene:'ユーザーから「もっと機能を追加してほしい」という要望が多数届いている。開発チームは追加に前向きだが、あなたは慎重だ。',q:'機能追加の優先順位をどう決めるべきか？',opts:['要望数の多い順に全て追加する','競合アプリが持っている機能を全てコピーする','コアユーザーへのインタビューで本質的な課題を特定する','開発チームが作りやすいものから追加する'],correct:2,why:'ユーザーの「要望」は手段であり目的ではありません。「カレンダー連携が欲しい」という要望の裏には「締め切りを忘れたくない」という本質的な課題があります。この本質を掴まずに要望を鵜呑みにすると、使われない機能だらけの製品になります。コアユーザーへのインタビューでJobs-to-be-Done（ユーザーが製品を使って達成したいこと）を特定することが正しいアプローチです。競合コピーは差別化を失い、開発都合での追加はユーザー価値を無視します。',tip:'「何を作るか」より「何を作らないか」の方が重要。プロダクトの価値は機能の数ではなく、解決する課題の深さで決まります。',words:[{term:'Jobs-to-be-Done（JTBD）',desc:'ユーザーが製品・サービスを使って「達成したいこと」を軸に考えるフレームワーク。機能ではなく目的・文脈を重視する。'},{term:'コアユーザー',desc:'製品を最も頻繁に・深く使っているユーザー層。製品の本質的な価値を最もよく理解している人たち。'}]},
+  {type:'product',typeLabel:'📦 Product',scene:'スマートフォン向けの家計簿アプリを開発している。無料版と有料版どちらを先に完成させるべきか議論になっている。',q:'MVP（最小限の製品）として最初にリリースすべきものはどれか？',opts:['全機能を搭載した完成版を一気に出す','無料で使える基本機能だけの版を先に出して反応を見る','有料版だけを先に出して収益化を優先する','デザインが完璧になるまでリリースを待つ'],correct:1,why:'MVPは「最小限の機能で市場に出せる製品」のこと。完成を待ってからリリースするのは、誰も使わないものを作るリスクを抱えたまま時間とコストをかけることになります。基本機能だけの無料版を早く出すことで、①実際のユーザー行動データが取れる、②改善のフィードバックが得られる、③口コミで早期にユーザーが広がる、という3つのメリットがあります。「完璧な製品より早い学習」がスタートアップの鉄則です。',tip:'Dropboxは最初、実際の製品ではなく「デモ動画」だけをMVPとして公開し、需要を確認してから開発を始めました。MVP思考は時間とお金を守ります。',words:[{term:'MVP（Minimum Viable Product）',desc:'最小限の機能で市場に出せる製品のこと。完成を待たずに早く出して反応を見る、スタートアップの基本戦略。'},{term:'フィードバックループ',desc:'製品を出す→ユーザーの反応を見る→改善する、を繰り返すサイクル。ループが速いほど製品が早く良くなる。'}]},
+  {type:'product',typeLabel:'📦 Product',scene:'健康管理アプリのユーザーが増えてきた。次のフェーズとして「睡眠記録」「食事記録」「運動記録」の3つの新機能追加を検討している。',q:'最も正しい優先順位の決め方はどれか？',opts:['3つ全て同時に追加する','最も開発コストが低いものから追加する','ユーザーデータで最も使用頻度が高い行動から追加する','競合アプリにない機能から追加する'],correct:2,why:'ユーザーデータは「ユーザーが実際に何を求めているか」を客観的に示す最も信頼できる指標です。アプリ内での行動ログを見ると、どの機能がよく使われ、どこで離脱しているかがわかります。全て同時追加は開発リソースの分散になり、質が下がります。開発コスト優先は技術都合であり、ユーザー価値と一致しないことが多い。競合優位は一つの判断基準ですが、ユーザー需要のデータより優先すべきではありません。',tip:'Google・Facebookなどの大企業も「データドリブン」な意思決定を徹底しています。感覚より数字を信じる文化が良いプロダクトを作ります。',words:[{term:'データドリブン',desc:'データ・数字をもとに意思決定すること。感覚や経験ではなく、実際のユーザー行動データを根拠にする考え方。'},{term:'行動ログ',desc:'アプリやサービス上でユーザーが行った操作・行動の記録。どのページを見たか、何をタップしたかなどが記録される。'}]},
+  {type:'product',typeLabel:'📦 Product',scene:'教育系SaaSを運営している。解約率（チャーン率）が月5%と高く、解約の理由を調査したところ「使い方がわからない」が最多だった。',q:'Productとして最優先で改善すべきことはどれか？',opts:['機能を増やして価値を高める','価格を下げて解約しにくくする','オンボーディング（導入支援）フローを改善する','解約ボタンを見つけにくくする'],correct:2,why:'「使い方がわからない」という解約理由は、製品の価値が伝わっていないことを示しています。この場合、機能を増やしても問題は解決せず（むしろ複雑になる）、価格を下げても使えなければ意味がありません。オンボーディング（ユーザーが製品に慣れるための導入フロー）を改善することで、ユーザーが「なるほど、これは使える！」と感じる体験を最初から設計できます。Slackは詳細なオンボーディングチュートリアルでチャーン率を大幅に下げた好例です。解約ボタンを隠すのは信頼を損ないます。',tip:'SaaSの解約の多くは「価値を感じられなかった」から。製品を使いこなしてもらうまでの最初の体験（オンボーディング）が最重要です。',words:[{term:'SaaS（Software as a Service）',desc:'インターネット経由でソフトウェアをサブスクで提供するビジネスモデル。SlackやNotionが代表例。'},{term:'チャーン率（解約率）',desc:'一定期間内に解約・離脱した顧客の割合。月5%のチャーン率は1年で半分以上の顧客を失う計算になる。'},{term:'オンボーディング',desc:'新しいユーザーがスムーズにサービスを使い始められるよう支援するプロセス。最初の体験が継続率を大きく左右する。'}]},
+  {type:'product',typeLabel:'📦 Product',scene:'SNSアプリのユーザー数が伸び悩んでいる。分析すると新規ユーザーの70%が登録から3日以内に離脱していることがわかった。',q:'最も効果的なProduct改善はどれか？',opts:['新機能を大量に追加して魅力を増やす','広告費を増やして新規ユーザーの獲得数を増やす','登録から3日以内の体験（オンボーディング）を根本から見直す','価格を下げる'],correct:2,why:'70%が3日以内に離脱するということは、「新規ユーザーが製品の価値を体験する前に諦めている」ことを意味します。この状態で新機能を追加しても広告費を増やしても、バケツの穴から水が漏れ続けるだけです。最優先で取り組むべきは「登録からAHA Moment（この製品すごい！という気づきの瞬間）まで最短で届けること」です。Twitterは「フォローを5人すれば継続率が上がる」と発見し、オンボーディングでフォロー推薦を強化しました。',tip:'ユーザーが「この製品の価値がわかった！」と感じる瞬間をAHA Momentといいます。ここに最短でたどり着けるオンボーディング設計が離脱を防ぎます。',words:[{term:'AHA Moment',desc:'ユーザーが初めて製品の核心的な価値を体験する「気づきの瞬間」。ここに早く到達させることが継続率を上げる鍵。'},{term:'離脱率',desc:'サービスから離れていったユーザーの割合。登録後すぐの離脱は製品の第一印象・オンボーディングに問題がある可能性が高い。'}]},
+  {type:'product',typeLabel:'📦 Product',scene:'スマートウォッチを開発している。市場調査では「バッテリーの持ち」が購入決定で最重要の要素だとわかった。',q:'Product戦略として最も正しい判断はどれか？',opts:['全ての機能を同等のリソースで開発する','バッテリー持続時間の向上を最優先の開発テーマにする','デザインの美しさを最優先にする','競合より安い価格設定を先に決める'],correct:1,why:'市場調査で「バッテリーの持ち」が購入決定の最重要要素とわかっているならば、そこに開発リソースを集中させるのが正しいProduct戦略です。ユーザーが最も価値を感じる部分を「コアバリュー」と呼び、ここへの投資が製品全体の評価を決めます。機能を均等に開発するのはリソースの無駄遣いで、どれも中途半端になります。価格は後からProductの価値に合わせて決めるもので、先に決めるものではありません。',tip:'「全部良くしよう」は「全部中途半端」になる近道。ユーザーが最も価値を感じる1点に集中投資することが製品の競争力を作ります。',words:[{term:'コアバリュー',desc:'ユーザーが製品を使う最大の理由・最も価値を感じる機能や体験のこと。ここへの投資が製品全体の評価を左右する。'},{term:'市場調査',desc:'製品の開発や販売戦略を立てるために、顧客ニーズ・競合・市場規模などを調べること。'}]},
+  {type:'product',typeLabel:'📦 Product',scene:'ゲームアプリを運営。DAU（日次アクティブユーザー数）は多いが、課金率が低い。',q:'Product改善として最も効果的なアプローチはどれか？',opts:['ゲーム内広告を大量に増やす','無料ユーザーに強制的に課金を促すポップアップを出す','課金することで得られる体験をより魅力的に設計し直す','ゲームの難易度を上げてクリアに課金が必要な設計にする'],correct:2,why:'課金率が低い根本原因は「課金するほどの価値を感じていない」ことです。強制的なポップアップや難易度操作は短期的に課金を増やせても、ユーザーの信頼を失い長期的な離脱につながります。ゲーム内広告の増加もUXを損ないます。最も持続可能な方法は「課金することで得られる体験・アイテム・ストーリー」を魅力的に設計し直すことで、ユーザーが「これは払う価値がある」と自発的に感じる状態を作ることです。',tip:'ゲームマネタイズの鉄則は「お金を払いたくなる体験を作ること」。強制や妨害ではなく、課金が「選択肢の一つ」になる設計が長期的に成功します。',words:[{term:'DAU（Daily Active Users）',desc:'1日あたりのアクティブユーザー数。サービスの日々の利用頻度を測る重要な指標。'},{term:'課金率',desc:'サービスの利用者のうち、実際にお金を払ったユーザーの割合。フリーミアムモデルでは平均2〜5%程度。'},{term:'マネタイズ',desc:'サービスや製品から収益を得る仕組みを作ること。広告・課金・サブスク・データ販売などがある。'}]},
+  {type:'product',typeLabel:'📦 Product',scene:'語学学習アプリDuolingoのような「ゲーミフィケーション」を自社の学習アプリに導入するか検討している。',q:'ゲーミフィケーション導入の最も重要な検討事項はどれか？',opts:['競合が導入しているから必ず導入すべき','楽しさ重視でポイント・バッジを大量に追加する','ゲーム要素が「学習そのものの動機づけ」になっているかを確認する','ゲーミフィケーションは子ども向けなので大人向けには不要'],correct:2,why:'ゲーミフィケーションは「外発的動機づけ（ポイントやバッジ）」を使って継続を促す手法ですが、正しく設計しないと「ポイント目当て」の行動が増え、肝心の学習効果が下がるリスクがあります。重要なのは、ゲーム要素が「学習の価値を高める」ものになっているかどうかです。Duolingoのストリーク（連続学習日数）は学習継続を直接促進しますが、意味のないバッジを乱発しても価値はありません。ゲーミフィケーションは手段であって目的ではありません。',tip:'「楽しい」と「成果が出る」を両立させることがゲーミフィケーションの本質。楽しいだけで学習効果がなければ、長期的にユーザーは離れます。',words:[{term:'ゲーミフィケーション',desc:'ゲームの要素（ポイント・バッジ・レベルアップ等）を非ゲームのサービスに取り入れ、ユーザーの行動を促進する手法。'},{term:'外発的動機づけ',desc:'報酬・罰・評価など外部からの刺激によって行動する動機。内発的動機（やりたいからやる）と対比される。'}]},
+  {type:'product',typeLabel:'📦 Product',scene:'クラウド会計ソフトを提供している。競合他社が同様の機能を全て無料で提供すると発表した。',q:'Product戦略として最も適切な対応はどれか？',opts:['即座に価格を無料にして対抗する','競合と価格競争せず、自社の差別化価値（サポート品質・連携機能）を強化する','新機能の開発を止めてコスト削減に集中する','市場から撤退する'],correct:1,why:'価格競争に安易に参戦することは、収益性を破壊する最も危険な戦略です。特に競合が資金力で上回る場合、価格競争は自社が先に疲弊します。正しいアプローチは「なぜユーザーは競合が無料でも自社を選ぶのか」という差別化要因を明確にし、そこを強化することです。クラウド会計では「税理士との連携機能」「カスタマーサポートの質」「他ツールとの連携」などが差別化ポイントになり得ます。コア価値を磨き続けることが長期的な競争力を作ります。',tip:'価格競争は最後の手段。価格以外の価値で選ばれる理由を作ることが持続可能なビジネスの基本です。',words:[{term:'差別化',desc:'競合他社と異なる独自の価値・特長を持つこと。価格・品質・サービス・ブランドなど様々な軸での差別化がある。'},{term:'価格競争',desc:'競合他社と価格の引き下げ合いをすること。体力勝負になりやすく、市場全体の収益性を下げるリスクがある。'}]},
+  {type:'product',typeLabel:'📦 Product',scene:'オンライン学習プラットフォームで、コース修了率が15%と低い。',q:'Product改善として最も効果的なアプローチはどれか？',opts:['コースの価格を下げて参加のハードルを下げる','コースの内容を増やして充実させる','コース設計をより細かいステップに分け、進捗可視化と達成感を設計し直す','修了できなかったユーザーに返金ポリシーを設ける'],correct:2,why:'オンライン学習の低修了率の主な原因は「継続の難しさ」です。コースが長すぎて途中で挫折するユーザーが多い場合、内容を増やすことは逆効果です。最も効果的なのは、①コースを小さな達成可能なステップに分解する、②進捗バーや修了バッジで達成感を可視化する、③適切なリマインドで学習を促す、という設計変更です。これはゲームの「レベルアップ設計」と同じ原理で、小さな成功体験の積み重ねが継続動機を維持します。Duolingoはこの設計で世界最大の語学学習アプリになりました。',tip:'学習の継続を支えるのは「コンテンツの質」より「続けやすい設計」です。小さな達成感を積み重ねる体験設計が修了率を上げます。',words:[{term:'修了率',desc:'コースや学習プログラムを最後まで完了したユーザーの割合。オンライン学習では平均10〜15%と低く、改善が課題になることが多い。'},{term:'進捗可視化',desc:'学習・作業の進み具合を数値やグラフで見えるようにすること。ユーザーの達成感と継続動機を高める効果がある。'}]},
+  {type:'product',typeLabel:'📦 Product',scene:'スマートホームデバイスを開発。技術的には非常に高機能だが、初期設定が複雑でユーザーから苦情が来ている。',q:'最も根本的なProduct改善はどれか？',opts:['詳細な取扱説明書を改善する','カスタマーサポートを24時間対応にする','初期設定プロセスを誰でも5分以内に完了できるよう再設計する','高機能を売りにした上級者向けマーケティングに切り替える'],correct:2,why:'「取扱説明書を読まなければ使えない製品」は現代では競争力を持ちません。Appleがここまで成功した理由の一つは「説明書がなくても直感的に使える設計」へのこだわりです。複雑な初期設定はオンボーディングの最大の障壁で、ここでユーザーが諦めると二度と戻ってきません。取扱説明書の改善やサポート強化は補助的な解決策に過ぎず、根本はProduct自体の設計を「誰でも使えるもの」に変えることです。',tip:'「良い技術」と「良い製品」は別物。どんなに優れた技術も、使いやすく届けられなければ価値になりません。',words:[{term:'直感的なUI',desc:'説明なしでも使い方がわかるインターフェース設計。ユーザーの「当たり前」の行動パターンに合わせることが重要。'},{term:'オンボーディングの障壁',desc:'新しいユーザーが製品を使い始める際に感じる難しさ・手間・不安のこと。ここを下げることが継続率に直結する。'}]},
+  {type:'price',typeLabel:'💰 Price',scene:'新しいタスク管理アプリのマネタイズを設計する。投資家から「6ヶ月でマネタイズを開始せよ」とプレッシャーがある。',q:'初期スタートアップとして最適な価格モデルはどれか？',opts:['最初から月額1,500円のサブスクのみ','完全無料で公開してユーザーを集める','基本無料＋プレミアム機能を月額800円（Freemium）','企業向けのみ年間契約10万円〜にする'],correct:2,why:'Freemiumモデルが初期スタートアップに最も適している理由は3つあります。①無料で使えることで参入障壁が下がり、口コミでユーザーが広がりやすい、②価値を体験したユーザーが自然に有料転換するため営業コストが低い、③無料ユーザーのデータから製品改善のフィードバックが大量に得られる。Slack・Dropbox・Notionはすべてこの戦略で成長しました。完全無料は収益化の道が見えず、最初から高額サブスクは認知がない段階では参入障壁が高すぎ、企業向け一本は営業サイクルが長くスタートアップの資金繰りには不向きです。',tip:'Freemiumの無料→有料転換率は平均2〜5%。100人の無料ユーザーがいれば2〜5人が有料になる計算です。無料ユーザーを多く集めることが収益の土台になります。',words:[{term:'Freemium（フリーミアム）',desc:'Free（無料）＋Premium（有料）の造語。基本機能を無料で提供し、高度な機能を有料にするビジネスモデル。Slack・Dropbox・Notionが代表例。'},{term:'有料転換率',desc:'無料ユーザーが有料プランに切り替える割合。フリーミアムモデルでは平均2〜5%程度。'},{term:'営業サイクル',desc:'商談の開始から契約締結までにかかる期間。BtoBは長く（数ヶ月〜1年）、BtoCは短い傾向がある。'}]},
+  {type:'price',typeLabel:'💰 Price',scene:'SaaSの月額料金を800円から1,200円に値上げすることを検討している。既存ユーザーが5,000人いる。',q:'値上げの際に最も適切なアプローチはどれか？',opts:['全ユーザーを一斉に新価格に移行する','既存ユーザーは旧価格を維持し、新規ユーザーから新価格を適用する','値上げはユーザーが離れるので絶対にしない','告知なしに自動的に値上げする'],correct:1,why:'既存ユーザーへの突然の値上げは解約率（チャーン率）を急増させます。SaaSビジネスでは既存顧客の維持が最重要で、特に長期利用ユーザーは最も大切にすべき層です。「グランドファザリング（旧価格保護）」は既存ユーザーへの敬意と信頼の表れで、離脱を防ぎながら収益を段階的に改善できます。NetflixやSpotifyも値上げの際には既存ユーザーへの事前告知と段階的な移行を行っています。告知なしの自動値上げは信頼を大きく損ないます。',tip:'値上げは「価値の証明」です。値上げ前に「なぜこの価格になるのか」の理由（新機能・サービス改善）をユーザーに伝えることで受け入れられやすくなります。',words:[{term:'グランドファザリング',desc:'既存契約者に旧価格を継続して適用すること。新規ユーザーには新価格を適用する「既存顧客保護」の手法。'},{term:'チャーン率（解約率）',desc:'一定期間内に解約・離脱した顧客の割合。SaaSではこれを下げることが最重要経営課題。'}]},
+  {type:'price',typeLabel:'💰 Price',scene:'高機能なクラウドストレージサービスを提供。100GB・500GB・2TBの3プランを設計している。',q:'ユーザーが中間プランを選びやすくするための価格設計はどれか？',opts:['100GB:300円 / 500GB:500円 / 2TB:2,000円','100GB:300円 / 500GB:980円 / 2TB:2,980円','100GB:無料 / 500GB:980円 / 2TB:1,080円','全プランを同じ価格にする'],correct:1,why:'行動経済学の「極端の回避性」という心理効果により、人は最も安いもの・最も高いものを避け、中間を選ぶ傾向があります。Bの価格設計では、100GB(300円)が安すぎてお得に見え、2TB(2,980円)は高すぎると感じ、500GB(980円)が「ちょうど良い」と感じさせます。これを「おとり効果」または「ゴルディロックス効果」と呼びます。Cのように500GBと2TBの価格差が小さいと「どうせなら2TB」と上位に流れ、バランスが崩れます。',tip:'価格設計は「いくらにするか」より「どう見せるか」が重要。3段階のプランでは中間プランが最も売れるよう設計することがビジネス上の基本です。',words:[{term:'極端の回避性',desc:'人が最も高いものや最も安いものを避け、中間の選択肢を選びやすい心理傾向。価格設計に活用される行動経済学の概念。'},{term:'ゴルディロックス効果',desc:'3つの選択肢があるとき、人は中間の選択肢を選びやすいという心理効果。「ちょうど良い」を演出する価格設計に使われる。'},{term:'おとり効果',desc:'意図的に「選ばせたいプランを選びやすくするための比較対象」を設置する価格戦略。'}]},
+  {type:'price',typeLabel:'💰 Price',scene:'新しいオンライン学習コースを販売。同じ内容のコースを「19,800円」と「20,000円」どちらで設定するかを検討している。',q:'心理的価格設定として正しい判断はどれか？',opts:['20,000円の方がきりが良くて信頼感がある','19,800円の方が安く感じるため購入率が上がりやすい','価格差が200円なので違いはない','コースの内容次第で価格設定は関係ない'],correct:1,why:'「端数価格（チャーム・プライシング）」は、19,800円が20,000円より知覚的に大幅に安く感じられる心理現象を利用した価格設定です。人は価格を左から右に読むため、「1」で始まる価格は「2」で始まる価格より心理的に低い段階に置かれます。これはスーパーマーケットから高額商品まで広く使われている手法で、同じ200円の差でも「20,000円→19,800円」はより大きな割引感を生みます。ただし高級ブランドではきりの良い価格の方が「プレミアム感」を演出する場合もあります。',tip:'心理的価格設定は消費者の知覚に働きかける手法。ただしブランドポジションによっては「きりの良い価格」がプレミアム感を演出する逆の効果もあります。',words:[{term:'端数価格（チャーム・プライシング）',desc:'19,800円や9,980円のように、端数を使うことで心理的に安く感じさせる価格設定の手法。'},{term:'価格の知覚',desc:'実際の価格ではなく、消費者が「高い・安い」と感じる主観的な評価のこと。同じ価格でも見せ方で知覚が変わる。'}]},
+  {type:'price',typeLabel:'💰 Price',scene:'競合他社が自社製品と全く同じ機能を30%安い価格で提供すると発表した。',q:'価格戦略として最も適切な対応はどれか？',opts:['即座に同じ価格に値下げして対抗する','競合より10%安い価格に設定して勝負する','価格を維持しながら自社の差別化価値（品質・サポート・ブランド）を強化する','市場から撤退する'],correct:2,why:'価格競争に安易に参戦することは収益性を破壊する最も危険な戦略です。特に競合が大きな資金力を持つ場合、価格競争は体力勝負になり自社が先に疲弊します。「なぜユーザーは競合が安くても自社を選ぶのか」という差別化要因を明確にし、そこを強化することが正しいアプローチです。AppleはWindowsと価格競争せず、「デザイン・エコシステム・ユーザー体験」を磨き続け、プレミアム価格を維持しながら成長しました。',tip:'価格競争は最後の手段。「安さ」で選ばれるビジネスは常に「もっと安い競合」に脅かされます。価格以外の価値で選ばれる理由を作ることが持続可能な戦略です。',words:[{term:'価格競争',desc:'競合他社と価格の引き下げ合いをすること。体力勝負になりやすく、市場全体の収益性を下げるリスクがある。'},{term:'プレミアム価格戦略',desc:'競合より高い価格を設定することで、品質・ブランド・ステータスの高さを印象づける価格戦略。'}]},
+  {type:'price',typeLabel:'💰 Price',scene:'BtoB SaaSを提供。大企業（従業員1,000人以上）への販売を強化したい。現在は一律月額5,000円のプランのみ。',q:'エンタープライズ向けの価格戦略として最も適切なのはどれか？',opts:['大企業でも同じ月額5,000円を維持する','大企業向けに高機能・高価格のエンタープライズプランを設ける','大企業には特別に値引きして対応する','大企業向けの価格はケースバイケースで都度交渉する'],correct:1,why:'エンタープライズ企業はSMB（中小企業）と全く異なるニーズを持っています。セキュリティ・SSO（シングルサインオン）・SLA（サービスレベル保証）・専任サポート・カスタム機能などが求められ、それに見合った高価格は正当化されます。また大企業は「安すぎるサービスは信頼できない」と感じる傾向があります。エンタープライズプランを設けることで、中小企業向けの価格も「スタンダード感」が生まれます。Slack・Zoom・Notionも全てエンタープライズプランを持っています。',tip:'エンタープライズ営業は価格より「信頼・セキュリティ・サポート体制」が重視されます。価格を下げるより価値を上げる方が大企業には刺さります。',words:[{term:'エンタープライズ',desc:'大企業・大規模組織を指すビジネス用語。一般的に従業員1,000人以上の企業を指すことが多い。'},{term:'SSO（シングルサインオン）',desc:'一つのID・パスワードで複数のサービスにログインできる仕組み。大企業のセキュリティ管理に必須とされることが多い。'},{term:'SLA（サービスレベル保証）',desc:'サービスの稼働率・応答時間・サポート品質などを保証する契約。エンタープライズ向けサービスでは必須とされることが多い。'}]},
+  {type:'price',typeLabel:'💰 Price',scene:'月額課金のフィットネスアプリを提供。年払いプランを追加することを検討している。月額1,200円で、年払いにするといくらが適切か？',q:'年払いの価格設定として最も効果的なのはどれか？',opts:['12ヶ月分そのままの14,400円','2ヶ月分無料の10,000円（月換算833円）','1ヶ月分無料の13,200円（月換算1,100円）','月額より高い16,000円にして特典をつける'],correct:1,why:'年払いの最大の目的は「チャーン率を下げること」と「キャッシュフローの改善」です。「2ヶ月分無料（約17%オフ）」は、ユーザーに「かなりお得」と感じさせながら、年間の継続コミットメントを取り付けられます。月額と同額の年払いは選ぶ動機がなく、1ヶ月分無料（8%オフ）は「お得感」が薄い。年払いをしたユーザーは解約率が月払いより大幅に低くなる傾向があり（既に1年分払っているため）、LTV向上に直結します。',tip:'年払いは「ユーザーへの割引」であると同時に「解約率を下げる最も効果的なProduct設計」の一つ。キャッシュフローも一括で改善されます。',words:[{term:'キャッシュフロー',desc:'事業に入ってくるお金と出ていくお金の流れ。年払いは一度に現金が入るためキャッシュフロー改善効果が高い。'},{term:'LTV（Life Time Value）',desc:'一人の顧客が生涯を通じてもたらす総利益・総売上。年払いユーザーはLTVが高い傾向がある。'}]},
+  {type:'price',typeLabel:'💰 Price',scene:'高級ブランドのコスメをECサイトで販売。あるブランドから「もっと安く売ってほしい」という要望が来た。',q:'高級ブランド製品の価格戦略として最も正しい考え方はどれか？',opts:['安くすれば多く売れるので値下げすべき','高級ブランドの価格は維持すべきで、値下げはブランド価値を毀損する','セール時のみ割引して平常時は定価を維持する','競合より安い価格に設定してシェアを取る'],correct:1,why:'高級ブランドの価格は「機能的価値」だけでなく「感情的価値・ステータス価値」を含みます。HermesやLouis Vuittonが決してセールをしない理由は、値下げが「誰でも買える」ブランドという認識を生み、希少性・高級感というブランドの核心的価値を破壊するからです。高級コスメも同様で、価格を下げることで「このブランドはそれほどでもない」という知覚が生まれます。高級品の価格は「高いから価値がある」という逆説的な関係（ヴェブレン効果）が働きます。',tip:'高級品の価格は「コストの積み上げ」ではなく「ブランド価値の表現」です。値下げはブランドの価値を下げる自傷行為になりかねません。',words:[{term:'ブランド価値',desc:'消費者がブランドに対して感じる信頼・感情・ステータスなどの総合的な評価。'},{term:'ヴェブレン効果',desc:'価格が高いほど需要が増える現象。高級品・贅沢品において「高いから良い・高いから欲しい」という心理が働く。'}]},
+  {type:'price',typeLabel:'💰 Price',scene:'スタートアップが新しいプロジェクト管理ツールをリリースする予定。価格をいくらにするか決められていない。',q:'価格設定の最も良いアプローチはどれか？',opts:['コストに利益を乗せたコストプラス法で計算する','競合製品と同じ価格にする','ターゲットユーザーが「高い」と感じる価格より少し低く設定する','まず無料で提供してユーザー数が増えてから考える'],correct:2,why:'価格設定の最も重要な基準は「ユーザーが感じる価値」です。コストプラス法は製品の価値ではなくコストを基準にするため、値付けが低すぎたり高すぎたりするリスクがあります。競合と同じ価格は差別化なしの戦略で、自社の価値を正しく反映しません。ターゲットユーザーへのインタビューで「いくらなら払う？」「いくらなら高い？」を調査し、その価格帯の中に設定するVan Westendorp法が実践的です。',tip:'価格は「作る側のコスト」ではなく「買う側の感じる価値」で決まります。ユーザーインタビューで「支払い意欲（Willingness to Pay）」を確認してから設定しましょう。',words:[{term:'コストプラス法',desc:'製造コストや原価に一定の利益を上乗せして価格を決める方法。シンプルだが市場の価値認識とズレが生じやすい。'},{term:'Van Westendorp法',desc:'「安すぎる・高すぎる・少し高い・少し安い」の4質問でユーザーの価格感度を調査する手法。適正価格範囲の特定に使われる。'},{term:'支払い意欲（WTP）',desc:'消費者が製品・サービスに対して最大いくらまで払えるかという意思の大きさ。価格設定の重要な基準。'}]},
+  {type:'price',typeLabel:'💰 Price',scene:'フリーランス向けの請求書作成ツールを提供。月額300円と月額1,500円の2プランがある。ほとんどのユーザーが300円プランを選んでいる。',q:'1,500円プランへの移行を促すための最も効果的な戦略はどれか？',opts:['300円プランの機能を削減する','1,500円プランの価値（節税機能・確定申告連携など）をより明確に訴求する','中間に800円プランを追加する','1,500円プランを月額1,200円に値下げする'],correct:1,why:'価格プランへの移行が起きない理由は多くの場合「上位プランの価値が伝わっていない」ことです。1,500円プランに「確定申告との自動連携」「税理士相談機能」「売上分析レポート」などフリーランスにとって時間節約・収益向上に直結する機能があれば、月額1,200円の差は十分に正当化されます。この価値が伝わっていなければ、値下げしても同じ問題が起きます。機能削減は既存ユーザーの不満を生み、価格引き下げは収益性を下げるだけです。',tip:'上位プランへの移行は「価格の問題」より「価値の伝え方の問題」であることがほとんど。「このプランにするといくら得か」をユーザーに見せましょう。',words:[{term:'価値訴求',desc:'製品・サービスが顧客にもたらすメリット・ベネフィットを明確に伝えること。「何ができるか」より「何が得られるか」を伝える。'},{term:'アップセル',desc:'現在の商品より上位・高額なものを勧めること。既存顧客へのアップセルは新規獲得より低コストで売上を増やせる。'}]},
+  {type:'price',typeLabel:'💰 Price',scene:'マーケティングエージェンシーが新サービス「SNS運用代行」の価格を設定する。',q:'最も収益性が高い価格設定モデルはどれか？',opts:['月額一律10万円の固定価格','投稿数に応じた従量課金（1投稿5,000円）','基本月額10万円＋成果に応じたボーナス報酬','最初の3ヶ月は無料でその後有料にする'],correct:2,why:'「基本固定費＋成果連動ボーナス」の混合モデルは代理店ビジネスに最も適した価格設計です。固定費で安定収益を確保しながら、成果が出た場合の上乗せでアップサイドも取れます。さらに「成果が出れば追加で払う」という仕組みはクライアントの継続意欲を高め、長期契約に繋がります。従量課金は投稿数が少ない月に収益が下がるリスクがあり、完全成果報酬は初期の工数コストを回収できないリスクがあります。',tip:'代理店ビジネスの価格設計は「固定費で安全網を作り、成果連動で上限を設けない」混合モデルが最も収益性と継続率を両立させます。',words:[{term:'従量課金',desc:'使用量・成果・回数に応じて料金が変わる課金モデル。使った分だけ払う仕組み。'},{term:'成果報酬',desc:'サービスの成果（売上増・フォロワー増など）に連動して報酬が変わる契約形態。リスクとリターンを共有する。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'BtoBアプリを運営。個人ユーザーから「職場でも使いたい」という声が増えてきた。B2B展開を検討している。',q:'B2B展開で最初に優先すべき販売チャネルはどれか？',opts:['テレビCMで認知を広げる','既存ユーザーのボトムアップ（職場への持ち込み）を活用する','大手商社と代理店契約を結ぶ','展示会・セミナーのみに集中する'],correct:1,why:'ボトムアップ戦略（PLG：Product-Led Growth）は、個人ユーザーが職場に持ち込み、チーム導入につながるモデルです。Slack・Zoom・Figmaが証明した最も強力なB2B成長エンジンで、自社のファンが営業になるため高額な広告費が不要です。「上司から導入を指示される」トップダウンより、「現場から使い始めてボトムアップで広がる」方が定着率も高い。テレビCMは大量の資金が必要で、代理店・展示会は時間とコストがかかります。',tip:'PLGの成功に最も重要なのは「製品自体が口コミで広がりやすいこと」。個人が使い始めて「チームでも使おう」と思えるような設計（共有機能・招待機能）が鍵です。',words:[{term:'PLG（Product-Led Growth）',desc:'製品そのものが成長エンジンとなる戦略。ユーザーが製品を使いながら自然に他のユーザーを招待・紹介する仕組みを持つ。'},{term:'ボトムアップ',desc:'現場の個人が使い始めて、そこから組織全体に広がっていく浸透モデル。トップダウン（上から指示）の逆。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'高品質な職人手作り革製品を販売している。これまで自社ECサイトのみで販売してきたが、売上が頭打ちになってきた。',q:'販売チャネル拡大として最も適切な選択はどれか？',opts:['Amazonに出品して大量販売を目指す','セレクトショップや百貨店との取り扱い交渉をする','大手量販店での販売を目指す','価格を下げてより多くの人に届ける'],correct:1,why:'高品質な職人製品は「どこで売るか」がブランド価値に直結します。Amazonや大手量販店での販売は数量を増やせますが、安売り商品と並べられてブランドイメージを損なうリスクがあります。一方、センスのあるセレクトショップや百貨店への出品は「ここに置かれているから良いもの」というブランドの信頼を強化します。チャネル選択はブランドポジションの表現です。',tip:'チャネルはブランドそのものです。高級ブランドがコンビニで売られていたら価値が下がるのと同じで、どこで売るかがブランドイメージを作ります。',words:[{term:'チャネル',desc:'製品を顧客に届けるための経路・手段のこと。直販・EC・小売店・代理店・卸など様々な選択肢がある。'},{term:'ブランドポジション',desc:'競合と比較して、ターゲット顧客の心の中で自社ブランドがどのような位置に置かれているかを示す概念。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'スタートアップがグローバル展開を検討。国内で5万ユーザーを達成した。',q:'グローバル展開で最初に狙うべき市場はどれか？',opts:['人口最大の中国市場にまず参入する','全世界同時展開で一気にスケールする','英語圏（米国）を最初の市場に選びそこで実績を作る','東南アジア5カ国に同時展開する'],correct:2,why:'テックアプリのグローバル展開で米国市場は必須かつ最大のプレステージです。成功すればProduct HuntやTechCrunchに取り上げられ、世界中から注目されます。英語でのサービス展開は他の英語圏（英国・カナダ・オーストラリア）への展開も同時に可能になります。中国はアプリ規制・データ規制・ローカライズのコストが膨大で、初期スタートアップには不向きです。全世界同時展開はリソースが分散して全て中途半端になります。',tip:'グローバル展開は「一つの市場で証明してから次へ」が基本。最初の海外市場での成功事例が、次の市場への信頼になります。',words:[{term:'ローカライズ',desc:'製品・サービスを特定の地域の言語・文化・規制に合わせて適応させること。単なる翻訳を超えた現地化が必要。'},{term:'プレステージ',desc:'評判・信頼・権威のこと。米国市場での成功は世界市場への参入においてプレステージを高める効果がある。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'美容院がInstagram・LINE・電話・来店の4つの予約チャネルを持っているが、スタッフの管理が煩雑になっている。',q:'チャネル戦略として最も適切な対応はどれか？',opts:['全チャネルを統合管理できる予約システムを導入する','電話のみに一本化してシンプルにする','InstagramとLINEのみに絞る','予約チャネルをさらに増やして顧客の利便性を上げる'],correct:0,why:'複数のチャネルを持つこと自体は顧客利便性のために正しい判断ですが、管理が煩雑になると予約漏れ・ダブルブッキングなどのサービス品質低下につながります。正しいアプローチは「チャネルを減らす」のではなく「全チャネルを一元管理できるシステムを導入する」ことです。これを「オムニチャネル管理」と呼び、顧客にとってはどのチャネルを使っても一貫した体験が得られ、スタッフにとっては1画面で全予約を管理できる状態を実現します。',tip:'チャネルは「多い方が良い」と「管理できる範囲に絞る」のバランスが重要。チャネルを増やすなら必ずバックオフィスの管理体制を同時に整備しましょう。',words:[{term:'オムニチャネル',desc:'複数の販売・接客チャネルを統合し、顧客がどのチャネルを使っても一貫した体験を提供する戦略。'},{term:'一元管理',desc:'複数の情報・データ・業務を1つのシステム・場所でまとめて管理すること。効率化とミス防止に効果的。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'スマートフォンケースを販売するブランドが、Amazonへの出品とD2C（自社EC）のどちらに力を入れるか検討している。',q:'長期的なブランド構築の観点から最も正しい判断はどれか？',opts:['Amazonのみに絞って販売量を最大化する','D2Cのみで展開してブランドを完全にコントロールする','Amazonで認知を広げながらD2Cの育成に並行して投資する','どちらもやらずに実店舗のみにする'],correct:2,why:'AmazonとD2Cはそれぞれ異なる強みを持ちます。Amazonは「購買意図のある顧客への到達」に優れ、D2Cは「顧客データの取得・ブランド体験の設計・LTVの最大化」に優れています。Amazon依存は「Amazonが手数料を上げた・突然出品停止になった」というプラットフォームリスクを持ちます。正しいアプローチはAmazonで認知と初期顧客を獲得しながら、D2CでLTVの高い顧客基盤を育てる並行戦略です。',tip:'Amazonは「集客装置」、D2Cは「関係構築装置」として使い分けるのが最も効果的です。どちらか一方に依存するのが最大のリスクです。',words:[{term:'D2C（Direct to Consumer）',desc:'メーカーや生産者が中間業者を介さず、直接消費者に販売するビジネスモデル。顧客データと利益率を最大化できる。'},{term:'プラットフォームリスク',desc:'特定のプラットフォーム（Amazon・SNSなど）への依存から生じるリスク。ルール変更や突然の停止が事業に大きな影響を与える可能性がある。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'学習塾を運営している。コロナ禍を経てオンライン授業への需要が増えた。対面とオンラインをどう組み合わせるか検討している。',q:'最も効果的なチャネル戦略はどれか？',opts:['対面のみに戻す','オンラインのみに切り替える','対面・オンラインのハイブリッドで、生徒のニーズに合わせて選べるようにする','対面授業の価格を下げてオンラインに対抗する'],correct:2,why:'OMO（Online Merges with Offline）の考え方で、オンラインとオフラインを「どちらか」ではなく「どちらも」という選択肢として設計することが現代のサービス業に求められます。対面は「質問しやすい・集中できる・友人ができる」、オンラインは「通学時間ゼロ・録画で復習できる・遠方でも受講可能」という異なる価値があります。生徒・保護者が自分のライフスタイルに合わせて選べる柔軟性が差別化になります。',tip:'現代のサービス業はオンラインとオフラインを「融合させる」視点が重要。「どちらか」という二項対立から「どちらも活かす」設計に発想を転換しましょう。',words:[{term:'OMO（Online Merges with Offline）',desc:'オンラインとオフラインを融合させた顧客体験を設計する考え方。どちらかに絞るのではなく、両者の良さを活かす。'},{term:'ハイブリッド',desc:'2つの異なる要素を組み合わせた状態。対面とオンラインのハイブリッドは両方の利点を活かせる。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'食品メーカーが新しいプロテインバーを発売。スーパー・コンビニ・ジム・ECのどこで最初に販売するか決める必要がある。',q:'ターゲットが「筋トレをしている20〜30代男性」の場合、最初のチャネルとして最も適切なのはどれか？',opts:['スーパーマーケット','コンビニ','フィットネスジムの売店・自動販売機','大手ECサイト'],correct:2,why:'フィットネスジムはターゲット（筋トレをしている男性）が確実にいる「ターゲット濃度の高い場所」です。さらに「運動後にプロテインを補給する」という購買コンテキスト（状況）と完全に一致しています。スーパー・コンビニは量的リーチは広いですが、ターゲット外の購買も多くプロモーション効率が下がります。ECは購買意図がある人には強いですが、ブランド認知がない段階では発見されにくい。最初は「ターゲット濃度が高い場所」からスタートし、実績を作ってから横展開するのが定石です。',tip:'「どこで売るか」はターゲットが「どこで・どんな気持ちで」購買しやすいかを起点に考えましょう。量より「ターゲット濃度」が初期チャネル選定の鍵です。',words:[{term:'購買コンテキスト',desc:'顧客が購買する際の状況・気持ち・タイミングのこと。同じ製品でも購買コンテキストによって反応が変わる。'},{term:'ターゲット濃度',desc:'特定の場所・チャネルにどれだけターゲット顧客が集まっているかの密度。初期展開では濃度の高い場所から始めるのが効率的。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'コーヒーブランドがサブスクリプションで豆を定期配送している。新たにコンビニでのカップコーヒー販売を検討している。',q:'このチャネル拡大が持つ最大のリスクはどれか？',opts:['コンビニとの契約交渉が難しい','コンビニのコーヒーとサブスク会員の既存顧客が競合してサブスク解約を招くカニバリゼーション','コンビニの価格帯に合わせると利益率が下がる','ブランドイメージとコンビニのイメージが合わない'],correct:1,why:'カニバリゼーション（共食い）は複数チャネルを展開する際の最大のリスクです。コンビニで気軽に購入できるようになることで、「わざわざサブスクで定期注文しなくていいか」と感じる既存サブスク会員が増え、解約率が上がる可能性があります。チャネルを増やす際は「新しいチャネルが既存チャネルを侵食しないか」を必ず検討する必要があります。',tip:'チャネル拡大は「売上の増加」だけでなく「既存チャネルへの影響」を常にセットで考えましょう。新チャネルが既存顧客を奪わないよう設計することが重要です。',words:[{term:'カニバリゼーション',desc:'自社の複数の製品・チャネルが互いの顧客を奪い合う現象（共食い）。新チャネル展開時に必ず検討すべきリスク。'},{term:'サブスクリプション（サブスク）',desc:'月額・年額などの定期料金を支払うことでサービスを継続利用できるビジネスモデル。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'子ども向けプログラミング教育サービスを学校に導入してもらおうとしている。',q:'学校へのPlace（流通）戦略として最も効果的なアプローチはどれか？',opts:['各学校に個別に営業メールを送る','教育委員会や文部科学省との連携でトップダウンに採用を促す','パイロット校（試験導入校）での実績を作りその事例で他校へ横展開する','テレビCMで保護者の需要を喚起して学校からの問い合わせを増やす'],correct:2,why:'学校への導入において「実績のある学校が使っている」という事実は最も強い説得力を持ちます。教育機関はリスク回避志向が強く、新しいサービスの導入に慎重です。パイロット校での成功事例があることで①他の学校の「うちも試してみたい」という動機が生まれる②教師・生徒からの具体的なフィードバックが得られる③費用対効果の数字が示せる、という3つのメリットがあります。',tip:'B2B・公共機関への販売では「事例・実績」が最も強い営業ツールになります。まず1社・1校で成功事例を作ることに全力を注ぎましょう。',words:[{term:'パイロット（試験導入）',desc:'本格展開の前に限定的な範囲で試験的に導入すること。問題点の発見と実績作りを同時に行える。'},{term:'横展開',desc:'ある場所・顧客での成功事例を他の場所・顧客に展開すること。パイロットの成功が横展開の燃料になる。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'ハンドメイドアクセサリーを販売している作家がメルカリとミンネを利用している。売上を伸ばすために何を追加すべきか検討している。',q:'最も戦略的なチャネル拡張はどれか？',opts:['さらに多くのフリマアプリに登録する','Instagramでブランドアカウントを育てて自社ECに誘導する仕組みを作る','百貨店での出店を目指す','近隣のセレクトショップに卸す'],correct:1,why:'メルカリ・ミンネへの依存は「プラットフォームのルール変更・手数料引き上げ・突然のアカウント停止」というリスクを常に抱えます。Instagramで「ブランドの世界観・制作プロセス・作品」を継続的に発信してフォロワーを育て、自社ECに誘導することで「手数料ゼロ・顧客データ取得・価格コントロール」の直販基盤を作れます。フリマアプリ追加は管理コストが増えるだけで根本的解決にならず、百貨店・セレクトショップは初期の知名度がない段階では難しい。',tip:'ハンドメイド作家の最終的な目標は「プラットフォームに頼らず直接顧客と繋がること」。SNSは顧客との直接接点を作る最も低コストのチャネルです。',words:[{term:'プラットフォームリスク',desc:'特定のプラットフォームへの依存から生じるリスク。ルール変更・手数料引き上げ・アカウント停止が突然起きる可能性がある。'},{term:'自社EC',desc:'自分で運営する直販サイト。Shopify・BASE・STORESなどのツールで構築できる。手数料が低く顧客データも取得できる。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'BtoB向けソフトウェアをオンラインのみで販売している。大手企業への導入が進まない原因を分析したところ「担当者に会って話したい」という声が多かった。',q:'Place戦略として最も効果的な対応はどれか？',opts:['オンラインのみの販売を継続して待つ','対面営業チームを設置して大手企業向けに直販対応する','パートナー企業（SI・コンサル）を通じた間接販売チャネルを構築する','価格を下げてオンラインでの決断を促す'],correct:2,why:'大手企業への販売では「信頼できるパートナーが推薦してくれた」という情報の経路が購買決定に大きく影響します。SI（システムインテグレーター）・コンサルティング会社・業界特化のパートナーが「この製品を使うべき」と推薦してくれるチャネルを構築することで、信頼の問題を解決できます。さらにパートナーは既に大手企業との関係を持っているため、営業コストを下げながらリーチを拡大できます。',tip:'BtoB企業の「信頼」は製品の機能だけでなく「誰が勧めているか」に大きく依存します。チャネルパートナー戦略は信頼を借りる最も効率的な方法です。',words:[{term:'SI（システムインテグレーター）',desc:'企業のITシステムを設計・構築・運用する会社。大手企業との関係が深く、ソフトウェア販売の重要チャネルになることが多い。'},{term:'間接販売チャネル',desc:'自社が直接販売するのではなく、代理店・パートナー・卸業者などを通じて製品を顧客に届ける販売形態。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'クラフトビールブランドが醸造所に隣接したタップルームを開いている。遠方の顧客から「買えない」という声が増えてきた。',q:'チャネル拡大として最も効果的な順序はどれか？',opts:['全国のスーパーチェーンと交渉する','まず自社ECサイトを開設して直販し、その後地域の飲食店・酒販店に卸す','大手ビールメーカーと提携して流通を委託する','コンビニチェーンへの全国展開を目指す'],correct:1,why:'クラフトビールのブランド力はローカル・手作り・ストーリーにあります。チャネル拡大の順序は「ブランド価値を守りながら段階的に広げること」が重要です。まず自社ECで直販することで①顧客データが取れる②利益率が高い③ブランドコントロールができる、の3つを確保します。次に価値観の合う飲食店・酒販店に卸すことで「セレクトされた場所で飲める」というプレミアム感を維持します。',tip:'クラフトブランドのチャネル展開は「量を取るか価値を守るか」のトレードオフです。段階的に、ブランド価値を守れるチャネルから広げていくことが長期的に正解です。',words:[{term:'卸（おろし）',desc:'製造者から小売店・飲食店などに商品をまとめて販売すること。直販より利益率は下がるが、流通範囲を広げられる。'},{term:'ブランド価値の希釈',desc:'チャネルや流通を広げすぎることで、そのブランドの希少性・高級感・特別感が失われること。'}]},
+  {type:'place',typeLabel:'🏪 Place',scene:'フィットネスジムが郊外の大型店舗のみで展開している。都心のOLをターゲットにした小型スタジオを開くかどうかを検討している。',q:'Place戦略として最も重要な検討事項はどれか？',opts:['家賃が高い都心は避けて郊外を増やす','ターゲット（都心OL）が通いやすい立地・業態かを最優先に確認する','まず全国チェーンを目指して多店舗展開する','既存店と全く同じ業態で都心に出店する'],correct:1,why:'「場所」は物理的なビジネスにとって最も重要なProductの一部です。都心OLをターゲットにするならば、「職場から徒歩5分・更衣室が綺麗・30分でできるプログラム・仕事帰りに立ち寄れる時間帯営業」という立地・業態の設計が必要です。大型郊外店をそのまま都心に持ってくるでは、ターゲットのライフスタイルと合いません。',tip:'物理的なビジネスの立地選択は最初に決めると後から変えにくい最重要戦略。「ターゲットが自然に通りがかる場所」を起点に考えましょう。',words:[{term:'生活導線',desc:'ターゲット顧客が日常生活の中で移動・行動するルートや行動パターンのこと。立地選択の最重要な考慮事項。'},{term:'業態',desc:'ビジネスのスタイル・形式のこと。大型店・小型店・セルフ型・スタッフ型など、業態が異なると顧客層や運営方法も変わる。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'スタートアップが新しいタスク管理アプリをリリース。マーケティング予算は月10万円。まず1,000人のアクティブユーザー獲得がKPI。',q:'最もROIが高い初期Promotion施策はどれか？',opts:['Instagram広告に全額投下する','Product Hunt掲載＋プレスリリースで注目を集める','インフルエンサー1人に10万円で依頼する','SEO記事を20本作成して検索流入を狙う'],correct:1,why:'Product Huntへの掲載は無料でテック系ユーザーへ集中リーチでき、「今日のプロダクト」に選ばれればTechCrunchなどのメディアが取材に来ることがあります。プレスリリースと組み合わせると初日で数百〜数千ユーザーを獲得できた事例も多い。Instagram広告は10万円では認知獲得にとどまりCVRが低くなりがちです。インフルエンサー1人への集中投資はハイリスクで効果が読めません。SEO記事は長期的には最強ですが成果が出るまで3〜6ヶ月かかります。',tip:'初期スタートアップのPromotion鉄則は「少額で最大の注目を集める場所を選ぶこと」。Product Huntはテック系スタートアップにとって最もコスパの高い発表の場です。',words:[{term:'Product Hunt',desc:'新しいプロダクト・アプリを発見・共有するアメリカのプラットフォーム。テック系ユーザーやメディアが多く集まり、掲載されると一気に認知が広がる。'},{term:'ROI（Return On Investment）',desc:'投資に対してどれだけのリターンが得られたかを示す指標。ROIが高い＝少ない費用で大きな成果。'},{term:'CVR（Conversion Rate）',desc:'訪問者のうち目標行動（登録・購入など）を達成した割合。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'食品メーカーがInstagramで新商品を宣伝しようとしている。フォロワーが100万人いるインフルエンサーと50万人いるインフルエンサーのどちらに依頼するか迷っている。',q:'インフルエンサー選定で最も重要な判断基準はどれか？',opts:['フォロワー数が多い方を選ぶ','エンゲージメント率とフォロワーとブランドの関連性','報酬が安い方を選ぶ','有名人であることを優先する'],correct:1,why:'インフルエンサーマーケティングで最も重要なのはフォロワー数ではなくエンゲージメント率（いいね・コメント・シェアの割合）と「フォロワーと製品の親和性」です。100万フォロワーでエンゲージメント率0.5%のインフルエンサーより、10万フォロワーでエンゲージメント率5%の食品専門インフルエンサーの方が、実際の購買に繋がる可能性が高い。',tip:'インフルエンサーの選定基準は「フォロワーが多い」より「フォロワーと製品のターゲットが一致しているか」「エンゲージメントが高いか」を優先してください。',words:[{term:'エンゲージメント率',desc:'投稿へのいいね・コメント・シェアなどのリアクション数をインプレッション（表示回数）で割った割合。フォロワーとの関係の深さを示す。'},{term:'インフルエンサーマーケティング',desc:'フォロワーに影響力を持つSNSユーザーを活用して製品・ブランドを広める手法。フォロワーとの信頼関係が効果を左右する。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'Eコマースサイトでカート放棄率（カートに入れたのに購入しなかった割合）が70%と高い。',q:'最も効果的なPromotion施策はどれか？',opts:['SNS広告の予算を増やす','カート放棄後24時間以内にメールでリマインドを送る','商品ページのデザインを全面刷新する','割引キャンペーンを常時実施する'],correct:1,why:'カート放棄ユーザーは「購買意図が最も高い」ユーザー層です。何らかの理由（迷い・支払い情報入力の面倒・他比較）で離脱しただけで、正しいタイミングのリマインドで購買に戻る確率が高い。カート放棄後24時間以内のメールは最も効果が高く、カート放棄者の5〜15%が購買に戻るとされています。SNS広告増加は別のユーザーへのアプローチで即効性がなく、割引の常時実施はブランド価値を下げます。',tip:'カート放棄メールはEコマースで最もROIが高い施策の一つ。「放棄後1時間以内の最初のメール」が最も効果的で、件名に「忘れていませんか？」などのパーソナライズが効きます。',words:[{term:'カート放棄率',desc:'ECサイトでカートに商品を追加したが購入を完了しなかったユーザーの割合。平均70%前後と言われ、改善の余地が大きい。'},{term:'リマインドメール',desc:'行動を忘れているユーザーに思い出させるために送るメール。カート放棄・予約確認などに使われる。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'BtoB SaaSがコンテンツマーケティングを始めようとしている。どのコンテンツから作るべきか検討中。',q:'BtoB企業のコンテンツマーケティングで最初に作るべきコンテンツはどれか？',opts:['自社サービスの紹介動画','ターゲット顧客が検索するキーワードに対応した課題解決記事','会社のSNSを更新するための投稿','プレスリリース'],correct:1,why:'BtoBのコンテンツマーケティングはSEOと連動させることで最大効果が出ます。ターゲット顧客が「採用管理 効率化 方法」「勤怠管理 ソフト 比較」などで検索するキーワードに対応した記事を作ることで、購買意図がある顧客が自社サイトに流入します。自社紹介動画はすでに認知がある人向けで、認知ゼロの状態では見てもらえません。',tip:'BtoBのコンテンツは「顧客が困っているときに検索するキーワード」から逆算して作ることが鉄則。「何が書きたいか」ではなく「顧客が何を知りたいか」が出発点です。',words:[{term:'コンテンツマーケティング',desc:'有益なコンテンツを提供して見込み客を集め育てるマーケティング。広告と違い、コンテンツは資産として積み上がる。'},{term:'SEO（Search Engine Optimization）',desc:'検索エンジンで上位表示されるようにサイトを改善する施策。良質なコンテンツが基本。'},{term:'キーワード',desc:'ユーザーが検索エンジンに入力する言葉。ターゲット顧客が検索するキーワードを狙ってコンテンツを作ることが重要。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'地方の中小企業がデジタルマーケティングを始めたい。予算は月5万円。何から始めるべきかを検討している。',q:'最も効果的なPromotion施策の優先順位はどれか？',opts:['テレビCMを検討する','Googleビジネスプロフィール（旧Googleマイビジネス）の最適化から始める','InstagramとTikTokを同時に始める','自社アプリを開発する'],correct:1,why:'地方・中小企業にとって最もROIが高い初期施策はGoogleビジネスプロフィールの最適化です。無料で使え、「地域名＋業種」検索での上位表示、口コミ管理、写真・営業時間の更新ができます。地域住民が「近くのラーメン屋」「近くの美容院」で検索するときに表示されることは、地域ビジネスにとって最重要の集客チャネルです。',tip:'地方・中小企業のデジタルマーケティングはGoogleビジネスプロフィールから始めましょう。無料で始められ、効果が出るまでの速さも1〜2週間と早い。',words:[{term:'Googleビジネスプロフィール',desc:'Googleが提供する無料のビジネス情報掲載サービス。Google検索・Googleマップでの表示、口コミ管理ができる地域ビジネスの必須ツール。'},{term:'ローカルSEO',desc:'特定の地域での検索結果で上位表示されるための最適化。地域名＋業種のキーワードで上位に出ることが目的。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'語学学習アプリが「英語学習を始めたい人」をターゲットにしたSNS広告を出している。CTRは高いがCVR（ダウンロード率）が低い。',q:'CVRを改善するための最も効果的なアプローチはどれか？',opts:['広告予算を増やしてインプレッションを上げる','広告のターゲット設定を見直し、LPのメッセージを広告と一致させる','別のSNSプラットフォームに乗り換える','広告のクリエイティブ（画像・動画）を変える'],correct:1,why:'CTRが高いのにCVRが低い場合、「広告に興味を持ってクリックしたが、LPに来たら期待と違った」という広告とLPのメッセージのミスマッチが最も多い原因です。「英語を3ヶ月でペラペラに！」という広告をクリックして来たユーザーが、LP上で別のメッセージを見ると「あれ、違う」となります。広告とLPのメッセージを完全に一致させることで転換率が改善します。',tip:'CTR（クリック率）が高いのにCVR（転換率）が低い場合は「広告とLPのメッセージのミスマッチ」を疑いましょう。広告でした約束をLPで履行することが重要です。',words:[{term:'CTR（Click Through Rate）',desc:'広告が表示された回数のうちクリックされた割合。CTRが高い＝広告に興味を持った人が多い。'},{term:'LP（ランディングページ）',desc:'広告などから来たユーザーを特定の行動（申込・ダウンロードなど）に誘導するための1枚ページ。'},{term:'メッセージの一致',desc:'広告で伝えたメッセージとLPで伝えるメッセージが統一されていること。ユーザーの期待とのズレをなくすことでCVRが上がる。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'ECサイトで「送料無料」と「10%オフ」の2つのオファーをどちらにするか検討している。同等のコストがかかる。',q:'コンバージョン率向上に最も効果的なオファーはどれか？',opts:['10%オフの方が金額的メリットが明確で効果的','送料無料の方がコンバージョン率を上げやすい','どちらも同じ効果なので商品カテゴリで使い分ける','両方同時に提供する'],correct:1,why:'数多くの研究と実践事例で「送料無料は10%オフより高いCVRを生む」ことが確認されています。心理的な理由として「送料は余計なコスト・損失の感覚」があり、「送料が0になる」という完全な除去の方が「価格が10%安くなる」という割引より強く動機づける（損失回避性）からです。',tip:'「送料無料」は消費者の最大の離脱原因（送料の発生）を消す施策。「割引」は得する感覚を与えますが、「無料」は損する感覚を消す効果があり、より強く機能します。',words:[{term:'損失回避性',desc:'人は「得をする」より「損をしない」ことを強く動機づけられる心理傾向。「送料がかかる」という損失を避けるために行動する。'},{term:'オファー',desc:'顧客に提供する特典・条件のこと。割引・送料無料・ポイントなどが代表的なオファー形式。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'SaaSスタートアップが「紹介プログラム」を導入することを検討している。',q:'最も効果的な紹介プログラムの設計はどれか？',opts:['紹介した人のみに報酬を与える','紹介した人と紹介された人の両方に報酬を与える「両面報酬」','紹介された人のみに割引を提供する','報酬ではなくバッジ・称号で感謝する'],correct:1,why:'紹介プログラムの最も成功した設計は「紹介した人と紹介された人の両方に報酬を与えること（両面報酬）」です。Dropboxが「紹介で双方がストレージ増量」という仕組みで爆発的成長を遂げた事例が代表例です。紹介する側にとって「友人に得をさせてあげられる」という動機が加わり、紹介されやすくなります。',tip:'紹介プログラムの鍵は「紹介する人が友人に自信を持って勧められるか」。自分も得するだけでなく「友人にとっても良いこと」という感覚を設計しましょう。',words:[{term:'紹介プログラム（リファラルプログラム）',desc:'既存ユーザーが友人・知人を紹介することで双方に報酬が得られる仕組み。口コミでの顧客獲得を体系化した手法。'},{term:'両面報酬（Double-sided Incentive）',desc:'紹介した人と紹介された人の両方に報酬を与えるプログラム設計。一方だけに報酬を与えるより高い紹介率を生む。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'美容院がInstagramで集客を強化したい。毎日投稿しているが効果が出ていない。',q:'Instagram集客の改善として最も効果的なのはどれか？',opts:['投稿頻度をさらに増やす','Reels（動画）でビフォーアフターを定期的に投稿し、地元ハッシュタグを活用する','フォロワーを購入する','毎日違うジャンルの投稿をして幅広く発信する'],correct:1,why:'Instagramのアルゴリズムは動画（Reels）を静止画より大幅に優先表示します。美容院でのビフォーアフターは「視覚的な変化が明確」でシェアされやすく、美容情報を探しているユーザーに刺さります。地元のハッシュタグ（#渋谷美容院 #渋谷カット等）を使うことで「今すぐ予約できる地元の美容院を探している人」に届きます。投稿頻度は質より重要ではなく、ジャンルを散らすとアカウントのテーマが薄れます。',tip:'SNSは「継続」より「刺さるコンテンツ」が重要。美容院の場合、ビフォーアフター・施術プロセス動画・スタイリストの人柄が見える投稿が最も集客に繋がります。',words:[{term:'Reels（リール）',desc:'Instagramの短尺動画機能。静止画投稿より拡散されやすく、アルゴリズムでも優遇されるため集客に効果的。'},{term:'ハッシュタグ',desc:'SNSで投稿をカテゴリ分けする「#」から始まるキーワード。地元名＋業種のハッシュタグは近くにいるターゲット顧客への露出に効果的。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'クラウドファンディングでプロジェクトを立ち上げる予定。目標金額は200万円で30日間のキャンペーン。',q:'クラウドファンディング成功のPromotion戦略として最も重要なのはどれか？',opts:['公開初日は何も特別なことはせず様子を見る','公開初日から3日間で目標の30%以上を達成できるよう、事前に支援者を確保しておく','SNS広告を30日間均等に出稿する','目標金額を低く設定してすぐ達成できるようにする'],correct:1,why:'クラウドファンディングのアルゴリズムは「支援の勢い（モメンタム）」を重視します。公開直後の3日間で目標の30%以上を達成しているプロジェクトはプラットフォームで注目・推薦され、新しい支援者が流入する好循環が生まれます。このため、家族・友人・SNSフォロワーなど「確実に支援してくれる人」を事前にリストアップしておき、公開初日に動いてもらう「ローンチ作戦」が成功の最重要施策です。',tip:'クラウドファンディングは「集合知のための広告」ではなく「社会的証明を作るためのメディア」。最初の勢いを人工的に作ることが成功の鍵です。',words:[{term:'クラウドファンディング',desc:'インターネットを通じて不特定多数から資金を調達する仕組み。Makuake・CAMPFIREが国内代表例。'},{term:'モメンタム（勢い）',desc:'クラウドファンディングで重要な初速の勢い。序盤の達成率が高いほどプラットフォームで推薦されやすくなる。'},{term:'社会的証明',desc:'多くの人が選んでいる・支援しているという事実が「良いものだ」という判断を促す心理効果。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'Webサービスが「無料トライアル」を提供しているが、トライアル終了後の有料転換率が3%と低い。',q:'有料転換率を高めるPromotion施策として最も効果的はどれか？',opts:['トライアル期間を14日から7日に短縮する','トライアル中に価値を実感させるメールシーケンスを設計し、終了3日前に限定オファーを送る','トライアル終了と同時に強制的に有料プランに切り替える','トライアルを廃止して最初から有料にする'],correct:1,why:'転換率3%が低い理由は多くの場合「トライアル中に十分な価値を体験できていない」か「終了時に適切な促しがない」かのどちらかです。トライアル中のメールシーケンスで①使い方のヒントを毎日送る②「これができるようになりましたね」という進捗を伝える③終了3日前に「今契約すると特典あり」のオファーを送る、というプロセスを設計することで、価値体験と転換のモチベーションを同時に高められます。',tip:'トライアルから有料転換の最重要施策は「価値を感じてもらった直後」にオファーすること。価値体験のピークタイミングを逃さないメールシーケンスが鍵です。',words:[{term:'メールシーケンス',desc:'あらかじめ設定した順番・タイミングで自動送信されるメールの流れ。トライアルから有料転換を促すプロセスに使われる。'},{term:'有料転換率',desc:'無料トライアル・フリープランのユーザーが有料プランに切り替える割合。フリーミアムビジネスの重要な収益指標。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'飲食店チェーンが顧客のリピート率を上げるためのPromotion施策を検討している。',q:'リピート率向上に最も効果的な施策はどれか？',opts:['毎月割引クーポンを配布する','LINEの友だち追加でポイントが貯まり、誕生日特典や来店回数に応じた特典が得られるロイヤルティプログラムを導入する','SNSフォロワーを増やしてブランド認知を上げる','毎月メニューを変えて新鮮さを演出する'],correct:1,why:'ロイヤルティプログラム（ポイント・会員特典）はリピート促進の最も効果的かつ持続可能な施策です。毎月の割引クーポンは「クーポンがなければ来ない顧客」を作り、価格訴求への依存を高めるリスクがあります。ロイヤルティプログラムは①来るたびに価値が積み上がる②特別扱いされている感覚が生まれる③次も来たくなる動機を設計できる、という3つの効果で長期的なリピート率を高めます。',tip:'ロイヤルティプログラムの最大の効果は「次も来る理由」を作ること。スターバックスやヨドバシカメラのポイントプログラムは強力なリピート促進装置です。',words:[{term:'ロイヤルティプログラム',desc:'来店・購買のたびにポイント・特典が積み上がり、常連客へのリワードを提供する仕組み。スターバックスRewardsが代表例。'},{term:'リピート率',desc:'サービスを2回以上利用した顧客の割合。飲食・小売・サービス業では特に重要な収益指標。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'新製品のローンチに向けてプレスリリースを書こうとしている。初めて書くプレスリリース。',q:'プレスリリースで最も重要な要素はどれか？',opts:['自社製品の機能を全て詳しく説明すること','なぜ今・なぜこの製品がニュースになるのかという「ニュース価値」を明確にすること','CEOのコメントを長く入れること','競合他社との比較表を入れること'],correct:1,why:'プレスリリースはメディアが「これを読者に伝える価値があるか」を判断する文書です。最も重要なのは「ニュース価値（なぜ今・なぜ読者に関係あるか）」です。「新機能を追加した」ではなく「〇〇業界で初めて△△を実現した・社会問題XXXを解決する」という視点でメディアは取り上げ判断します。機能の羅列はリリースではなくカタログです。',tip:'プレスリリースは「会社の宣伝文」ではなく「記者が読者に伝えたくなるニュース」を書くもの。「これを読んだ読者にどんな価値があるか」を常に意識しましょう。',words:[{term:'プレスリリース',desc:'企業がメディア・プレスに向けて発行する公式な情報発表文書。新製品・新サービス・イベントなどのニュースを伝える。'},{term:'ニュース価値',desc:'メディアが情報を読者・視聴者に伝える価値があると判断する基準。新規性・社会的意義・意外性・影響範囲などが評価される。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'コスメブランドがユーザー生成コンテンツ（UGC）を活用したPromotion戦略を検討している。',q:'UGCを最も効果的に活用する方法はどれか？',opts:['ユーザーの投稿を断りなく転載して使う','ハッシュタグキャンペーンでユーザーが自発的に投稿したくなる仕組みを作り、許可を得て公式で活用する','インフルエンサーにお金を払ってUGC風の投稿をしてもらう','SNSの広告として強制的に流す'],correct:1,why:'UGC（User Generated Content）は「実際のユーザーが自発的に作ったコンテンツ」であることが最大の価値であり信頼性の源泉です。ハッシュタグキャンペーンで自発的な投稿を促し、ユーザーに許可を得て公式アカウントや広告で活用することで、「リアルな体験談」という最も信頼されるコンテンツが無限に生まれます。無断転載は著作権侵害・信頼損壊のリスクがあり、お金を払ったUGC風投稿はステマ規制の対象になる可能性があります。',tip:'UGCの最大の価値は「お金で買えないリアルな体験談」であること。この信頼性を守るために「自発的な投稿＋正式な許可取得」のプロセスを徹底しましょう。',words:[{term:'UGC（User Generated Content）',desc:'一般ユーザーが自発的に作成・投稿したコンテンツ。写真・レビュー・動画など。広告より信頼されやすい。'},{term:'ハッシュタグキャンペーン',desc:'特定のハッシュタグでユーザーに投稿を促すSNSキャンペーン手法。参加が簡単で口コミ拡散効果が高い。'},{term:'ステルスマーケティング（ステマ）',desc:'宣伝であることを隠して消費者に口コミのように見せる広告手法。景品表示法違反となり、信頼を大きく損なう。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'不動産会社が物件情報をYouTubeで発信しようとしている。チャンネル登録者を増やすための戦略を考えている。',q:'YouTube集客で最も効果的な戦略はどれか？',opts:['できるだけ多くの動画を毎日アップする','「○○エリアの住みやすさ徹底解説」「初めての一人暮らし完全ガイド」など、検索需要のある有益なコンテンツを定期的に投稿する','会社紹介・物件紹介の動画のみを投稿する','人気YouTuberとコラボする'],correct:1,why:'YouTubeは動画検索エンジンであり、「視聴者が知りたいこと・解決したいこと」を検索して辿り着く場所です。不動産の場合「○○区 住みやすい？」「一人暮らし 初期費用 いくら」などの検索ワードに答える動画を作ることで、まさに引越しや物件探しを検討している「購買意図の高いユーザー」に届きます。',tip:'YouTubeは「見たい動画」より「知りたいことを検索して見つける」プラットフォーム。「この動画を見て〇〇がわかった」という価値があるコンテンツが長期的に再生数を積み上げます。',words:[{term:'YouTube SEO',desc:'YouTube内の検索でチャンネルや動画が上位に表示されるよう最適化する手法。タイトル・サムネイル・説明文・キーワードが重要。'},{term:'コンテンツマーケティング',desc:'有益なコンテンツを提供して見込み客を引き寄せるマーケティング。YouTubeも重要なコンテンツマーケティングのチャネル。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'ECサイトが購入後のメールマーケティングを強化したい。購入完了メールの次に送るべき最適なメールは？',q:'購入後のリテンション（継続促進）に最も効果的なメールはどれか？',opts:['すぐに別商品のセールスメールを送る','購入した商品の使い方・活用法・おすすめの組み合わせを教える「アクティベーションメール」を送る','しばらく何も送らない','アンケートだけを送る'],correct:1,why:'購入直後は顧客の製品への期待と関心が最も高い瞬間です。この「ハネムーン期間」に「購入した製品の最大限の活用方法」を伝えることで、①製品への満足度が上がる②使いこなせる実感が生まれる③SNSでのシェアや口コミが起きやすくなる、という3つの効果が生まれます。すぐのセールスメールは「物を売ることしか考えていない」という印象を与えて信頼を損ないます。',tip:'購入後メールは「次の売上を狙う場」ではなく「今買ったものを最高に活用してもらう支援をする場」です。顧客満足度を高めることが結果的に次の購入につながります。',words:[{term:'リテンション',desc:'既存顧客を維持・引き留めること。新規顧客獲得より低コストで高い収益効果があると言われる。'},{term:'アクティベーション',desc:'ユーザーが製品・サービスを使いこなし、価値を実感する状態にすること。購入後のメールや導入支援がこれに当たる。'},{term:'メールマーケティング',desc:'メールを通じて顧客との関係を構築・維持し、購買を促進するマーケティング手法。ROIが高い施策として知られる。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'ECサイトで口コミ・レビューを増やしたい。購入後にレビューを書いてもらう方法を検討している。',q:'レビュー収集に最も効果的な施策はどれか？',opts:['レビューを書くとポイントが10倍になる高額インセンティブを設定する','商品到着後3〜7日のタイミングで「商品いかがでしたか？」とメールで使用感を聞き、レビューへの案内をする','全てのユーザーに「レビューを書いてください」と定型文メールを送る','レビューを書いたユーザーに現金報酬を提供する'],correct:1,why:'レビュー収集の最適なタイミングは「商品を実際に使って体験した直後」です。到着後3〜7日は製品への感想が新鮮で、良い体験をしたユーザーがシェアしたい気持ちが高い時期です。「いかがでしたか？」という使用感への質問から始めることで「評価を求められている」プレッシャーを下げながら、自然にレビューへ誘導できます。高額インセンティブは「お金のためのレビュー」を促しレビューの信頼性を失わせ、現金報酬はプラットフォームの規約違反になることが多い。',tip:'レビューは「いつ・どのように求めるか」が収集率を大きく左右します。顧客が最も満足しているタイミング（使った直後）に、負担なく依頼することが鍵です。',words:[{term:'社会的証明',desc:'多くの人が良いと評価しているという事実が購買決定を後押しする心理効果。レビュー・評価・推薦数が増えるほど購買率が上がる。'},{term:'UGC（User Generated Content）',desc:'一般ユーザーが自発的に作成したコンテンツ。レビュー・口コミはその代表。広告より信頼されやすい購買への影響力を持つ。'}]},
+  {type:'promotion',typeLabel:'📣 Promotion',scene:'フィットネスアプリが解約率（チャーン）を下げるためのPromotion施策を検討している。',q:'解約前のユーザーを引き止めるWin-back施策として最も効果的なのはどれか？',opts:['解約手続きを複雑にして離脱しにくくする','最後にログインしてから7日経過したユーザーに「あなたの記録を振り返りましょう」という進捗レポートを送る','解約したユーザーに割引クーポンを送る','解約ページに特典を表示して慰留する'],correct:1,why:'解約の最大の原因は「使わなくなったこと・忘れていたこと」です。ログインが途絶えた段階で「あなたはここまで続けました・この記録があります」という進捗レポートを送ることは、「せっかくここまでやったのにもったいない（サンクコスト効果）」という感情を呼び起こし、再ログインのきっかけになります。解約手続きを複雑にするのはユーザーの信頼を失い法的リスクもあります。',tip:'解約前の予防的アプローチが最も効果的。「使っていないユーザーを検知して早めにアクション」する仕組みがチャーン率を大幅に下げます。',words:[{term:'チャーン率（解約率）',desc:'一定期間内に解約・離脱した顧客の割合。SaaSやサブスクビジネスで最重要の指標。'},{term:'サンクコスト効果',desc:'すでに費やしたコスト（時間・お金・努力）がもったいなくて、継続してしまう心理。「ここまでやったのだから」という感覚。'},{term:'Win-back施策',desc:'離脱・解約したユーザーを再度引き戻すためのマーケティング施策。メール・クーポン・パーソナライズされたコンテンツなどが使われる。'}]},
+];
+
+// ===================================================
+// ゲームロジック
+// ===================================================
+
+let currentGenreKey = null;
+let gameQuestions = [];
+let currentQ = 0;
+let score = 0;
+let streak = 0;
+let answered = false;
+let numQ = 10;
+let typeScores = {};
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function show(id) {
+  ['homeScreen','genreScreen','gameScreen','resultScreen'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? 'block' : 'none';
+  });
+}
+
+function goHome() {
+  show('homeScreen');
+}
+
+function selectGenre(key) {
+  currentGenreKey = key;
+  const g = GENRES[key];
+  document.getElementById('genreHero').style.setProperty('--genre-color', g.color);
+  document.getElementById('genreHeroIcon').textContent = g.icon;
+  document.getElementById('genreHeroName').textContent = g.name;
+  document.getElementById('genreHeroDesc').textContent = g.desc;
+  document.getElementById('playBtn').style.background = `linear-gradient(135deg, ${g.color}, #e8c878)`;
+
+  // 問題数オプション
+  const sel = document.getElementById('countSelect');
+  sel.innerHTML = '';
+  const max = g.maxCount;
+  [[10,'10問（約5分）'],[20,'20問（約10分）'],[30,'30問（約15分）'],[Math.min(50,max),`${Math.min(50,max)}問（約25分）`]].forEach(([v,t]) => {
+    if (v <= max) {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = t;
+      sel.appendChild(o);
+    }
+  });
+
+  show('genreScreen');
+}
+
+function startGame() {
+  const g = GENRES[currentGenreKey];
+  numQ = parseInt(document.getElementById('countSelect').value);
+
+  const pool = currentGenreKey === 'mindreader' ? MINDREADER_Q : currentGenreKey === 'love' ? LOVE_Q : currentGenreKey === 'fourp' ? FOURP_Q : BIZWORD_Q;
+  gameQuestions = shuffle(pool).slice(0, numQ);
+
+  currentQ = 0; score = 0; streak = 0; answered = false;
+  typeScores = {};
+  g.types.forEach(t => { typeScores[t.key] = {c:0, t:0}; });
+
+  show('gameScreen');
+  loadQ();
+}
+
+function loadQ() {
+  answered = false;
+  const q = gameQuestions[currentQ];
+  const g = GENRES[currentGenreKey];
+
+  document.getElementById('hudQ').textContent = `${currentQ+1}/${numQ}`;
+  document.getElementById('hudScore').textContent = score;
+  document.getElementById('hudStreak').textContent = streak > 0 ? `${streak}🔥` : '0';
+
+  const badge = document.getElementById('typeBadge');
+  badge.textContent = q.typeLabel;
+  const typeInfo = g.types.find(t => t.key === q.type) || g.types[0];
+  badge.style.background = typeInfo.color + '22';
+  badge.style.color = typeInfo.color;
+  badge.style.border = `1px solid ${typeInfo.color}55`;
+
+  document.getElementById('sceneText').innerHTML = q.scene;
+  document.getElementById('qText').textContent = q.q;
+
+  const optEl = document.getElementById('options');
+  optEl.innerHTML = '';
+  ['A','B','C','D'].forEach((l, i) => {
+    if (i >= q.opts.length) return;
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="opt-letter">${l}</span><span>${q.opts[i]}</span>`;
+    btn.onclick = () => answer(i);
+    optEl.appendChild(btn);
+  });
+
+  document.getElementById('explainBox').classList.remove('show');
+  document.getElementById('nextBtn').classList.remove('show');
+  document.getElementById('wordsBox').classList.remove('show');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function answer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = gameQuestions[currentQ];
+  const btns = document.querySelectorAll('.opt');
+
+  if (typeScores[q.type]) typeScores[q.type].t++;
+
+  btns.forEach((b, i) => {
+    if (i === q.correct) b.classList.add('correct');
+    else if (i === idx) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+
+  const isCorrect = idx === q.correct;
+  if (isCorrect) {
+    score++;
+    streak++;
+    if (typeScores[q.type]) typeScores[q.type].c++;
+  } else {
+    streak = 0;
+  }
+
+  document.getElementById('hudScore').textContent = score;
+  document.getElementById('hudStreak').textContent = streak > 0 ? `${streak}🔥` : '0';
+  document.getElementById('explainIcon').textContent = isCorrect ? '✅' : '💡';
+  document.getElementById('explainTitle').textContent = isCorrect ? '正解！' : '惜しい！解説';
+  document.getElementById('explainResult').textContent = isCorrect ? '＋1' : '';
+  document.getElementById('explainResult').style.color = isCorrect ? 'var(--teal)' : 'var(--rose)';
+  document.getElementById('explainWhy').textContent = q.why;
+  document.getElementById('tipText').textContent = q.tip;
+  document.getElementById('explainBox').classList.add('show');
+
+  // 用語解説
+  const wordsBox = document.getElementById('wordsBox');
+  const wordsContent = document.getElementById('wordsContent');
+  if (q.words && q.words.length > 0) {
+    wordsContent.innerHTML = q.words.map(w =>
+      `<div class="word-item"><div class="word-term">▷ ${w.term}</div><div class="word-desc">${w.desc}</div></div>`
+    ).join('');
+    wordsBox.classList.add('show');
+  } else {
+    wordsBox.classList.remove('show');
+  }
+
+  const nb = document.getElementById('nextBtn');
+  nb.textContent = currentQ < numQ-1 ? `次へ (${currentQ+2}/${numQ}) →` : '結果を見る 🏆';
+  nb.classList.add('show');
+}
+
+function nextQ() {
+  currentQ++;
+  if (currentQ >= numQ) { showResult(); return; }
+  loadQ();
+}
+
+function showResult() {
+  show('resultScreen');
+  const g = GENRES[currentGenreKey];
+  document.getElementById('resultNum').textContent = score;
+  document.getElementById('resultDenom').textContent = `正解 / ${numQ}問`;
+
+  const pct = score / numQ;
+  let emoji, rank, sub;
+  if (pct >= 0.9)      { emoji='🏆'; rank='マスター'; sub='完璧な理解力です！'; }
+  else if (pct >= 0.7) { emoji='⭐'; rank='上級者'; sub='鋭い洞察力があります'; }
+  else if (pct >= 0.5) { emoji='🌱'; rank='中級者'; sub='あと一歩で上級者！'; }
+  else                 { emoji='📚'; rank='トレーニング中'; sub='解説を読んで復習しましょう'; }
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultRank').textContent = rank;
+  document.getElementById('resultSub').textContent = sub;
+
+  // タイプ別breakdown
+  let bHtml = '<div class="breakdown-title">タイプ別 正解率</div>';
+  g.types.forEach(t => {
+    const s = typeScores[t.key] || {c:0, t:0};
+    const p = s.t > 0 ? Math.round((s.c/s.t)*100) : 0;
+    bHtml += `<div class="breakdown-row">
+      <span class="breakdown-type">${t.label}</span>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:0%;background:${t.color}" data-w="${p}"></div></div>
+      <span class="breakdown-val">${s.c}/${s.t}</span>
+    </div>`;
+  });
+  document.getElementById('typeBreakdown').innerHTML = bHtml;
+  setTimeout(() => {
+    document.querySelectorAll('.breakdown-bar').forEach(el => { el.style.width = el.dataset.w+'%'; });
+  }, 100);
+
+  // 弱点アドバイス
+  const adviceMap = g.advice;
+  const weakest = g.types.reduce((a, b) => {
+    const as = typeScores[a.key] || {c:0,t:1};
+    const bs = typeScores[b.key] || {c:0,t:1};
+    return (as.c/as.t) < (bs.c/bs.t) ? a : b;
+  });
+  document.getElementById('adviceText').textContent = adviceMap[weakest.key] || '';
+
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function retryGame() {
+  startGame();
+}
+
+// 初期表示
+show('homeScreen');
+</script>
+</body>
+</html>
