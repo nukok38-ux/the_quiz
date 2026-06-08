@@ -205,7 +205,7 @@
     <div class="genre-card" style="--genre-color:#e87080" onclick="selectGenre('love')">
       <span class="genre-count">100問</span>
       <span class="genre-icon">💘</span>
-      <div class="genre-name">モテ・コミュ力</div>
+      <div class="genre-name">コミュ力</div>
       <div class="genre-desc">会話術・自己磨き・関係構築のコツ</div>
     </div>
 
@@ -235,7 +235,6 @@
 
 <!-- ===== GENRE SCREEN ===== -->
 <div id="genreScreen">
-  <button class="back-btn" onclick="goHome()">← ジャンル選択に戻る</button>
   <div class="genre-hero" id="genreHero">
     <span class="genre-hero-icon" id="genreHeroIcon">🔍</span>
     <div class="genre-hero-name" id="genreHeroName">心を読む</div>
@@ -247,6 +246,7 @@
     <option value="30">30問モード（約15分）</option>
   </select>
   <button class="play-btn" id="playBtn" onclick="startGame()">スタート →</button>
+  <button class="play-btn" style="margin-top:12px;background:linear-gradient(135deg,#4a4a4a,#2a2a2a);color:var(--warm);" onclick="goHome()">← ジャンル選択に戻る</button>
 </div>
 
 <!-- ===== GAME ===== -->
@@ -345,10 +345,10 @@ const GENRES = {
     maxCount: 30,
   },
   love: {
-    name: 'モテ・コミュ力',
+    name: 'コミュ力',
     icon: '💘',
     color: '#e87080',
-    desc: '会話術・自己磨き・デートの誘い方・関係構築のコツを学ぶクイズ。30問からランダム出題。',
+    desc: '会話術・自己磨き・デートの誘い方・関係構築のコツを学ぶクイズ。100問からランダム出題。',
     types: [
       {key:'talk',  label:'💬 会話術',   color:'#e87080'},
       {key:'mind',  label:'🧠 マインド', color:'#a06cd5'},
@@ -401,7 +401,7 @@ const GENRES = {
     name: 'Webサイト設計思考',
     icon: '🖥️',
     color: '#f5945b',
-    desc: 'お客様の目的・ターゲット・導線設計を整理し、売上・問い合わせ・集客につながるWebサイトを設計する思考力を鍛えるクイズ。30問からランダム出題。',
+    desc: 'お客様の目的・ターゲット・導線設計を整理し、売上・問い合わせ・集客につながるWebサイトを設計する思考力を鍛えるクイズ。100問からランダム出題。',
     types: [
       {key:'target',    label:'🎯 ターゲット設定', color:'#f5945b'},
       {key:'lead',      label:'🗺️ 導線設計',      color:'#4ab8a8'},
